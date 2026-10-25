@@ -1,34 +1,31 @@
-import mongoose from "mongoose";
-import { AppError, BadRequestError, InternalServerError } from "../errors/AppError";
+import { AuthenticationError, NotAllowedError, ResourceNotFoundError, ValidationError } from "../errors/DomainErrors";
 
-interface CustomError {
-  code?: number;
-  type?: string;
-  message?: string;
+export interface HttpError {
+  statusCode: number;
+  message: string;
+  details?: unknown;
+  isExpected: boolean;
 }
 
-export const normalizeError = (err: unknown): AppError => {
-  if (err instanceof AppError) {
-    return err;
+interface BodyParserError {
+  type?: string;
+}
+
+export const toHttpError = (err: unknown): HttpError => {
+  if (err instanceof ValidationError) {
+    return { statusCode: 400, message: err.message, details: err.details, isExpected: true };
   }
-
-  if (err instanceof mongoose.Error.ValidationError) {
-    return new BadRequestError("Error de validación", err.errors);
+  if (err instanceof AuthenticationError) {
+    return { statusCode: 401, message: err.message, isExpected: true };
   }
-
-  if (err instanceof mongoose.Error.CastError) {
-    return new BadRequestError(`Valor inválido para el campo '${err.path}'`);
+  if (err instanceof NotAllowedError) {
+    return { statusCode: 403, message: err.message, isExpected: true };
   }
-
-  const customErr = err as CustomError;
-
-  if (customErr?.code === 11000) {
-    return new BadRequestError("Valor duplicado: ya existe un registro con esos datos");
+  if (err instanceof ResourceNotFoundError) {
+    return { statusCode: 404, message: err.message, isExpected: true };
   }
-
-  if (customErr?.type === "entity.parse.failed") {
-    return new BadRequestError("JSON inválido en el cuerpo de la petición");
+  if ((err as BodyParserError)?.type === "entity.parse.failed") {
+    return { statusCode: 400, message: "JSON inválido en el cuerpo de la petición", isExpected: true };
   }
-
-  return new InternalServerError("Error interno del servidor");
+  return { statusCode: 500, message: "Error interno del servidor", isExpected: false };
 };

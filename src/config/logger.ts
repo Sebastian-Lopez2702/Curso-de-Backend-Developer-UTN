@@ -17,7 +17,14 @@ export const logger = winston.createLogger({
         winston.format.printf(({ timestamp, level, message, stack }) => `${timestamp} [${level}] ${stack ?? message}`),
       ),
     }),
-    new winston.transports.File({ filename: "logs/error.log", level: "error", silent: isProd }),
-    new winston.transports.File({ filename: "logs/combined.log", silent: isProd }),
+    new winston.transports.File({
+      filename: "logs/error.log",
+      level: "error",
+      silent: isProd,
+    }),
+    new winston.transports.File({
+      filename: "logs/combined.log",
+      silent: isProd,
+    }),
   ],
 });

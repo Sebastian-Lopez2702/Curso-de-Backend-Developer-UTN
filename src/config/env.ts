@@ -21,6 +21,7 @@ export const env = {
   port: Number(process.env.PORT),
   mongoUri: process.env.MONGO_URI as string,
   jwtSecret: process.env.JWT_SECRET as string,
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "1h",
   initialAdmin: {
     email: process.env.INITIAL_ADMIN_EMAIL as string,
     password: process.env.INITIAL_ADMIN_PASSWORD as string,
