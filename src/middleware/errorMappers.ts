@@ -1,4 +1,10 @@
-import { AuthenticationError, NotAllowedError, ResourceNotFoundError, ValidationError } from "../errors/DomainErrors";
+import {
+  AuthenticationError,
+  ConflictError,
+  NotAllowedError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "../errors/DomainErrors";
 
 export interface HttpError {
   statusCode: number;
@@ -23,6 +29,9 @@ export const toHttpError = (err: unknown): HttpError => {
   }
   if (err instanceof ResourceNotFoundError) {
     return { statusCode: 404, message: err.message, isExpected: true };
+  }
+  if (err instanceof ConflictError) {
+    return { statusCode: 409, message: err.message, isExpected: true };
   }
   if ((err as BodyParserError)?.type === "entity.parse.failed") {
     return { statusCode: 400, message: "JSON inválido en el cuerpo de la petición", isExpected: true };

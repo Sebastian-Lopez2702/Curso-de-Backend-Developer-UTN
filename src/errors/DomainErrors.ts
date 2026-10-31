@@ -39,3 +39,11 @@ export class ResourceNotFoundError extends Error {
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
+
+export class ConflictError extends Error {
+  constructor(message = "La operación entra en conflicto con el estado actual del recurso") {
+    super(message);
+    this.name = "ConflictError";
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}

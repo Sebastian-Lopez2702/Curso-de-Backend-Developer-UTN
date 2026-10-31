@@ -59,6 +59,20 @@ export class ProductRepository implements IProductRepository {
     return products[0];
   }
 
+  public async findByIdAndSellerId(id: string, sellerId: string): Promise<Product | null> {
+    if (!isValidObjectId(id) || !isValidObjectId(sellerId)) return null;
+
+    const record = await ProductModel.findOne({
+      _id: id,
+      sellerId: sellerId,
+      isActive: true,
+    });
+    if (record === null) return null;
+
+    const products = await this.toEntities([record]);
+    return products[0];
+  }
+
   public async findPaginated(filter: ProductFilter): Promise<PaginatedResult<Product>> {
     const page = Math.max(1, Math.floor(filter.page));
     const limit = Math.max(1, Math.floor(filter.limit));

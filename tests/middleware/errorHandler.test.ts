@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { logger } from "../../src/config/logger";
 import {
   AuthenticationError,
+  ConflictError,
   NotAllowedError,
   ResourceNotFoundError,
   ValidationError,
@@ -25,6 +26,10 @@ describe("toHttpError - Traducción de errores a HTTP", () => {
 
   it("Debería traducir ResourceNotFoundError a 404", () => {
     expect(toHttpError(new ResourceNotFoundError()).statusCode).toBe(404);
+  });
+
+  it("Debería traducir ConflictError a 409", () => {
+    expect(toHttpError(new ConflictError()).statusCode).toBe(409);
   });
 
   it("Debería traducir un JSON malformado a 400", () => {

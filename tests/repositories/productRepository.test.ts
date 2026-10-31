@@ -88,6 +88,45 @@ describe("ProductRepository", () => {
     });
   });
 
+  describe("findByIdAndSellerId", () => {
+    it("Debería devolver el producto activo si pertenece al vendedor indicado", async () => {
+      const seller = await createUser({ role: "SELLER" });
+      const sellerId = seller.getId() as string;
+      const created = await createProduct({ sellerId });
+
+      const found = await repository.findByIdAndSellerId(created.getId() as string, sellerId);
+      expect(found).toBeInstanceOf(Product);
+      expect(found?.getId()).toBe(created.getId());
+      expect(found?.getSellerId()).toBe(sellerId);
+      expect(found?.getCategory()).toBeDefined();
+    });
+
+    it("Debería devolver null si el producto pertenece a otro vendedor", async () => {
+      const seller1 = await createUser({ role: "SELLER" });
+      const seller2 = await createUser({ role: "SELLER" });
+      const created = await createProduct({ sellerId: seller1.getId() as string });
+
+      const found = await repository.findByIdAndSellerId(created.getId() as string, seller2.getId() as string);
+      expect(found).toBeNull();
+    });
+
+    it("Debería devolver null si el producto está inactivo", async () => {
+      const seller = await createUser({ role: "SELLER" });
+      const sellerId = seller.getId() as string;
+      const created = await createProduct({ sellerId });
+      created.deactivate();
+      await repository.save(created);
+
+      const found = await repository.findByIdAndSellerId(created.getId() as string, sellerId);
+      expect(found).toBeNull();
+    });
+
+    it("Debería devolver null con id o sellerId inválidos", async () => {
+      expect(await repository.findByIdAndSellerId("invalido", "invalido")).toBeNull();
+      expect(await repository.findByIdAndSellerId(new mongoose.Types.ObjectId().toString(), "invalido")).toBeNull();
+    });
+  });
+
   describe("findPaginated", () => {
     it("Debería listar solo activos con total y paginar", async () => {
       for (let i = 0; i < 5; i++) await createProduct();

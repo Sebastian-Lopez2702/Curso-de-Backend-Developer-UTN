@@ -1,5 +1,6 @@
-import { ResourceNotFoundError, ValidationError } from "../../src/errors/DomainErrors";
+import { ConflictError, ResourceNotFoundError, ValidationError } from "../../src/errors/DomainErrors";
 import { ICategoryRepository } from "../../src/interfaces/categoryRepository";
+import { IProductRepository } from "../../src/interfaces/productRepository";
 import { Category } from "../../src/models/category";
 import { CategoryService } from "../../src/services/categoryService";
 
@@ -11,13 +12,25 @@ const buildRepositoryMock = (): jest.Mocked<ICategoryRepository> => ({
   count: jest.fn(),
 });
 
+const buildProductRepositoryMock = (): jest.Mocked<IProductRepository> => ({
+  save: jest.fn(),
+  findById: jest.fn(),
+  findByIdAndSellerId: jest.fn(),
+  findPaginated: jest.fn(),
+  findBySellerId: jest.fn(),
+  decrementStock: jest.fn(),
+  existsByCategoryId: jest.fn(),
+});
+
 describe("CategoryService", () => {
   let repository: jest.Mocked<ICategoryRepository>;
+  let productRepository: jest.Mocked<IProductRepository>;
   let service: CategoryService;
 
   beforeEach(() => {
     repository = buildRepositoryMock();
-    service = new CategoryService(repository);
+    productRepository = buildProductRepositoryMock();
+    service = new CategoryService(repository, productRepository);
   });
 
   describe("create", () => {
@@ -48,7 +61,25 @@ describe("CategoryService", () => {
     it("Debería lanzar ResourceNotFoundError si no existe", async () => {
       repository.findById.mockResolvedValue(null);
       await expect(service.delete("1")).rejects.toBeInstanceOf(ResourceNotFoundError);
+      expect(productRepository.existsByCategoryId).not.toHaveBeenCalled();
       expect(repository.deleteById).not.toHaveBeenCalled();
+    });
+
+    it("Debería lanzar ConflictError sin eliminar si hay productos que la usan", async () => {
+      repository.findById.mockResolvedValue(new Category({ name: "A" }));
+      productRepository.existsByCategoryId.mockResolvedValue(true);
+
+      await expect(service.delete("1")).rejects.toBeInstanceOf(ConflictError);
+      expect(productRepository.existsByCategoryId).toHaveBeenCalledWith("1");
+      expect(repository.deleteById).not.toHaveBeenCalled();
+    });
+
+    it("Debería eliminar la categoría si no está en uso", async () => {
+      repository.findById.mockResolvedValue(new Category({ name: "A" }));
+      productRepository.existsByCategoryId.mockResolvedValue(false);
+
+      await service.delete("1");
+      expect(repository.deleteById).toHaveBeenCalledWith("1");
     });
   });
 });
