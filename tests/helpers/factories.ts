@@ -1,5 +1,7 @@
 import { JwtPayload } from "../../src/interfaces/auth";
+import { Category, CategoryProps } from "../../src/models/category";
 import { User, UserProps } from "../../src/models/user";
+import { CategoryRepository } from "../../src/repositories/categoryRepository";
 import { UserRepository } from "../../src/repositories/userRepository";
 import { signToken } from "../../src/utils/jwt";
 
@@ -25,7 +27,21 @@ export const createUser = async (overrides: UserProps = {}): Promise<User> => {
   return user;
 };
 
+export const createCategory = async (overrides: CategoryProps = {}): Promise<Category> => {
+  counter += 1;
+  const category = new Category({
+    name: `Categoría ${counter}`,
+    description: "Descripción",
+    ...overrides,
+  });
+  await new CategoryRepository().save(category);
+  return category;
+};
+
 export const tokenFor = (user: User): string => {
-  const payload: JwtPayload = { userId: user.getId() as string, role: user.getRole() };
+  const payload: JwtPayload = {
+    userId: user.getId() as string,
+    role: user.getRole(),
+  };
   return signToken(payload);
 };

@@ -26,7 +26,7 @@ const buildStoredUser = async (password: string, role = "CLIENT"): Promise<User>
   return user;
 };
 
-describe("UserService - Lógica de usuarios", () => {
+describe("UserService", () => {
   let repository: jest.Mocked<IUserRepository>;
   let service: UserService;
 
@@ -82,7 +82,7 @@ describe("UserService - Lógica de usuarios", () => {
 
     it("Debería lanzar ValidationError si faltan credenciales o no son texto", async () => {
       await expect(service.login({})).rejects.toBeInstanceOf(ValidationError);
-      await expect(service.login({ email: { $gt: "" }, password: "x" })).rejects.toBeInstanceOf(ValidationError);
+      await expect(service.login({ email: { $gt: "" } as any, password: "x" })).rejects.toBeInstanceOf(ValidationError);
       expect(repository.findByEmail).not.toHaveBeenCalled();
     });
   });
