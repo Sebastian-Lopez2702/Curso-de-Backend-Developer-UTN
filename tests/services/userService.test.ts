@@ -6,7 +6,7 @@ import {
   ValidationError,
 } from "../../src/errors/DomainErrors";
 import { IUserRepository } from "../../src/interfaces/userRepository";
-import { User } from "../../src/models/user";
+import { User, UserRole } from "../../src/models/user";
 import { UserService } from "../../src/services/userService";
 import { decodeToken } from "../../src/utils/jwt";
 import { buildUserProps } from "../helpers/factories";
@@ -19,7 +19,7 @@ const buildRepositoryMock = (): jest.Mocked<IUserRepository> => ({
   existsByRole: jest.fn(),
 });
 
-const buildStoredUser = async (password: string, role = "CLIENT"): Promise<User> => {
+const buildStoredUser = async (password: string, role: UserRole = UserRole.CLIENT): Promise<User> => {
   const user = new User(buildUserProps({ role }));
   user.assignId("abc123");
   user.assignPasswordHash(await bcrypt.hash(password, 4));
@@ -38,17 +38,17 @@ describe("UserService", () => {
   describe("register", () => {
     it("Debería guardar el usuario con rol CLIENT por defecto", async () => {
       const user = await service.register(buildUserProps());
-      expect(user.getRole()).toBe("CLIENT");
+      expect(user.getRole()).toBe(UserRole.CLIENT);
       expect(repository.save).toHaveBeenCalledWith(user);
     });
 
     it("Debería permitir registrar un SELLER", async () => {
-      const user = await service.register(buildUserProps({ role: "SELLER" }));
-      expect(user.getRole()).toBe("SELLER");
+      const user = await service.register(buildUserProps({ role: UserRole.SELLER }));
+      expect(user.getRole()).toBe(UserRole.SELLER);
     });
 
     it("Debería lanzar NotAllowedError si se intenta registrar un ADMIN", async () => {
-      await expect(service.register(buildUserProps({ role: "ADMIN" }))).rejects.toBeInstanceOf(NotAllowedError);
+      await expect(service.register(buildUserProps({ role: UserRole.ADMIN }))).rejects.toBeInstanceOf(NotAllowedError);
       expect(repository.save).not.toHaveBeenCalled();
     });
 
@@ -60,11 +60,11 @@ describe("UserService", () => {
 
   describe("login", () => {
     it("Debería devolver un token con userId y role", async () => {
-      repository.findByEmail.mockResolvedValue(await buildStoredUser("correcta1", "SELLER"));
+      repository.findByEmail.mockResolvedValue(await buildStoredUser("correcta1", UserRole.SELLER));
 
       const { token, user } = await service.login({ email: "a@a.com", password: "correcta1" });
 
-      expect(decodeToken(token)).toEqual({ userId: "abc123", role: "SELLER" });
+      expect(decodeToken(token)).toEqual({ userId: "abc123", role: UserRole.SELLER });
       expect(user.getId()).toBe("abc123");
     });
 

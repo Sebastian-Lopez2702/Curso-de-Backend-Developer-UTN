@@ -1,5 +1,6 @@
 import request from "supertest";
 import { app } from "../../src/app";
+import { UserRole } from "../../src/models/user";
 import { UserModel } from "../../src/repositories/schemas/userSchema";
 import { clearUsers, connectTestDb, disconnectTestDb } from "../helpers/db";
 import { DEFAULT_PASSWORD, buildUserProps, createUser, tokenFor } from "../helpers/factories";
@@ -18,15 +19,15 @@ describe("Usuario", () => {
     it("Debería registrar un CLIENT por defecto sin devolver la contraseña", async () => {
       const res = await register(buildUserProps());
       expect(res.status).toBe(201);
-      expect(res.body.data.role).toBe("CLIENT");
+      expect(res.body.data.role).toBe(UserRole.CLIENT);
       expect(res.body.data.id).toBeDefined();
       expect(res.body.data.password).toBeUndefined();
     });
 
     it("Debería permitir registrarse como SELLER", async () => {
-      const res = await register(buildUserProps({ role: "SELLER" }));
+      const res = await register(buildUserProps({ role: UserRole.SELLER }));
       expect(res.status).toBe(201);
-      expect(res.body.data.role).toBe("SELLER");
+      expect(res.body.data.role).toBe(UserRole.SELLER);
     });
 
     it("Debería guardar la contraseña hasheada en la base", async () => {
@@ -37,7 +38,7 @@ describe("Usuario", () => {
     });
 
     it("Debería responder 403 si intenta registrarse como ADMIN", async () => {
-      const res = await register(buildUserProps({ role: "ADMIN" }));
+      const res = await register(buildUserProps({ role: UserRole.ADMIN }));
       expect(res.status).toBe(403);
       expect(await UserModel.countDocuments()).toBe(0);
     });
@@ -152,7 +153,7 @@ describe("Usuario", () => {
     });
 
     it("Debería responder 403 para un CLIENT", async () => {
-      const client = await createUser({ role: "CLIENT" });
+      const client = await createUser({ role: UserRole.CLIENT });
       const res = await request(app)
         .get("/api/users")
         .set("Authorization", `Bearer ${tokenFor(client)}`);
@@ -160,7 +161,7 @@ describe("Usuario", () => {
     });
 
     it("Debería responder 403 para un SELLER", async () => {
-      const seller = await createUser({ role: "SELLER" });
+      const seller = await createUser({ role: UserRole.SELLER });
       const res = await request(app)
         .get("/api/users")
         .set("Authorization", `Bearer ${tokenFor(seller)}`);
@@ -168,7 +169,7 @@ describe("Usuario", () => {
     });
 
     it("Debería listar los usuarios para un ADMIN sin exponer contraseñas", async () => {
-      const admin = await createUser({ role: "ADMIN" });
+      const admin = await createUser({ role: UserRole.ADMIN });
       await createUser();
       const res = await request(app)
         .get("/api/users")

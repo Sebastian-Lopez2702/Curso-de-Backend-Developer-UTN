@@ -2,8 +2,14 @@ import bcrypt from "bcrypt";
 import { ErrorDetail, ValidationError } from "../errors/DomainErrors";
 import { UserErrorMessages } from "./userErrorMessages";
 
-export const USER_ROLES = ["ADMIN", "CLIENT", "SELLER"] as const;
-export type UserRole = (typeof USER_ROLES)[number];
+export const UserRole = {
+  ADMIN: "ADMIN",
+  CLIENT: "CLIENT",
+  SELLER: "SELLER",
+} as const;
+
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
+export const USER_ROLES = [UserRole.ADMIN, UserRole.CLIENT, UserRole.SELLER] as const;
 
 export interface UserProps {
   firstName?: string;
@@ -36,7 +42,7 @@ export class User {
     this.email = (props.email as string).trim().toLowerCase();
     this.phone = props.phone?.trim();
     this.password = props.password as string;
-    this.role = (props.role ?? "CLIENT") as UserRole;
+    this.role = (props.role ?? UserRole.CLIENT) as UserRole;
   }
 
   public getId(): string | undefined {
@@ -80,7 +86,7 @@ export class User {
   }
 
   public isAdmin(): boolean {
-    return this.role === "ADMIN";
+    return this.role === UserRole.ADMIN;
   }
 
   public async verifyPassword(plainPassword: string): Promise<boolean> {

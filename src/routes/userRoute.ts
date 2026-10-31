@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { UserController } from "../controllers/userController";
 import { authorizeRoles, verifyToken } from "../middleware/verifyToken";
+import { UserRole } from "../models/user";
 import { UserRepository } from "../repositories/userRepository";
 import { UserService } from "../services/userService";
 
@@ -13,6 +14,6 @@ const router = Router();
 router.post("/register", userController.register);
 router.post("/login", userController.login);
 router.get("/me", verifyToken, userController.me);
-router.get("/", verifyToken, authorizeRoles("ADMIN"), userController.getAll);
+router.get("/", verifyToken, authorizeRoles(UserRole.ADMIN), userController.getAll);
 
 export { router as userRouter };

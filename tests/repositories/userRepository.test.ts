@@ -1,5 +1,5 @@
 import { ValidationError } from "../../src/errors/DomainErrors";
-import { User } from "../../src/models/user";
+import { User, UserRole } from "../../src/models/user";
 import { UserRepository } from "../../src/repositories/userRepository";
 import { UserModel } from "../../src/repositories/schemas/userSchema";
 import { clearUsers, connectTestDb, disconnectTestDb } from "../helpers/db";
@@ -101,13 +101,13 @@ describe("UserRepository", () => {
 
   describe("existsByRole", () => {
     it("Debería devolver true si hay un usuario con ese rol", async () => {
-      await createUser({ role: "SELLER" });
-      expect(await repository.existsByRole("SELLER")).toBe(true);
+      await createUser({ role: UserRole.SELLER });
+      expect(await repository.existsByRole(UserRole.SELLER)).toBe(true);
     });
 
     it("Debería devolver false si no hay usuarios con ese rol", async () => {
-      await createUser({ role: "CLIENT" });
-      expect(await repository.existsByRole("ADMIN")).toBe(false);
+      await createUser({ role: UserRole.CLIENT });
+      expect(await repository.existsByRole(UserRole.ADMIN)).toBe(false);
     });
   });
 });

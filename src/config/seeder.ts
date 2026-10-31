@@ -1,11 +1,11 @@
 import { env } from "./env";
 import { logger } from "./logger";
 import { IUserRepository } from "../interfaces/userRepository";
-import { User } from "../models/user";
+import { User, UserRole } from "../models/user";
 import { UserRepository } from "../repositories/userRepository";
 
 export const seedAdmin = async (userRepository: IUserRepository = new UserRepository()): Promise<void> => {
-  if (await userRepository.existsByRole("ADMIN")) return;
+  if (await userRepository.existsByRole(UserRole.ADMIN)) return;
 
   const admin = new User({
     firstName: "Admin",
@@ -13,7 +13,7 @@ export const seedAdmin = async (userRepository: IUserRepository = new UserReposi
     dni: env.initialAdmin.dni,
     email: env.initialAdmin.email,
     password: env.initialAdmin.password,
-    role: "ADMIN",
+    role: UserRole.ADMIN,
   });
   await userRepository.save(admin);
   logger.info("Usuario ADMIN inicial creado");

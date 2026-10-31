@@ -38,7 +38,7 @@ const userSchema = new Schema<UserRecord>(
     email: { type: String, required: true, unique: true, index: true, lowercase: true },
     phone: { type: String },
     password: { type: String, required: true },
-    role: { type: String, enum: USER_ROLES, required: true, default: "CLIENT", index: true },
+    role: { type: String, enum: USER_ROLES, required: true, default: UserRole.CLIENT, index: true },
     savedAddresses: { type: [savedAddressSchema], default: [] },
   },
   { timestamps: true },

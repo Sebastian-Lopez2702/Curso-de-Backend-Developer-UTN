@@ -2,16 +2,14 @@ import { RegisterUserDto } from "../dtos/registerUserDto";
 import { LoginDto } from "../dtos/loginDto";
 import { AuthenticationError, NotAllowedError, ResourceNotFoundError, ValidationError } from "../errors/DomainErrors";
 import { IUserRepository } from "../interfaces/userRepository";
-import { User } from "../models/user";
+import { User, UserRole } from "../models/user";
 import { signToken } from "../utils/jwt";
-
-const NOT_ALLOWED_ROL = "ADMIN";
 
 export class UserService {
   constructor(private readonly userRepository: IUserRepository) {}
 
   public async register(dto: RegisterUserDto): Promise<User> {
-    if (dto.role === NOT_ALLOWED_ROL) {
+    if (dto.role === UserRole.ADMIN) {
       throw new NotAllowedError("No está permitido registrarse con el rol ADMIN");
     }
 

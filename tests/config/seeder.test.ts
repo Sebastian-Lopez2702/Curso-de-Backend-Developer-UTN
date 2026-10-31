@@ -1,5 +1,6 @@
 import { env } from "../../src/config/env";
 import { seedAdmin } from "../../src/config/seeder";
+import { UserRole } from "../../src/models/user";
 import { UserRepository } from "../../src/repositories/userRepository";
 import { clearUsers, connectTestDb, disconnectTestDb } from "../helpers/db";
 import { createUser } from "../helpers/factories";
@@ -28,7 +29,7 @@ describe("Seeder - Admin inicial", () => {
   });
 
   it("No debería crear un ADMIN si ya existe uno", async () => {
-    await createUser({ role: "ADMIN" });
+    await createUser({ role: UserRole.ADMIN });
     await seedAdmin(repository);
     expect(await repository.findAll()).toHaveLength(1);
   });

@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { ValidationError } from "../../src/errors/DomainErrors";
-import { User } from "../../src/models/user";
+import { User, UserRole } from "../../src/models/user";
 import { buildUserProps } from "../helpers/factories";
 
 const captureValidationError = (props: object): ValidationError => {
@@ -16,7 +16,7 @@ describe("User", () => {
   describe("creación", () => {
     it("Debería crear un usuario con rol CLIENT por defecto", () => {
       const user = new User(buildUserProps());
-      expect(user.getRole()).toBe("CLIENT");
+      expect(user.getRole()).toBe(UserRole.CLIENT);
       expect(user.isAdmin()).toBe(false);
       expect(user.getId()).toBeUndefined();
     });
@@ -27,8 +27,8 @@ describe("User", () => {
     });
 
     it("Debería aceptar el rol SELLER y ADMIN", () => {
-      expect(new User(buildUserProps({ role: "SELLER" })).getRole()).toBe("SELLER");
-      expect(new User(buildUserProps({ role: "ADMIN" })).isAdmin()).toBe(true);
+      expect(new User(buildUserProps({ role: UserRole.SELLER })).getRole()).toBe(UserRole.SELLER);
+      expect(new User(buildUserProps({ role: UserRole.ADMIN })).isAdmin()).toBe(true);
     });
 
     it("Debería permitir asignar el id", () => {
