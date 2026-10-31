@@ -8,7 +8,7 @@ import { signToken } from "../utils/jwt";
 const NOT_ALLOWED_ROL = "ADMIN";
 
 export class UserService {
-  constructor(private readonly userRepository: IUserRepository) { }
+  constructor(private readonly userRepository: IUserRepository) {}
 
   public async register(dto: RegisterUserDto): Promise<User> {
     if (dto.role === NOT_ALLOWED_ROL) {

@@ -1,8 +1,9 @@
 import bcrypt from "bcrypt";
 import { Schema, Types, model } from "mongoose";
+import { env } from "../../config/env";
 import { USER_ROLES, UserRole } from "../../models/user";
 
-const SALT_ROUNDS = 10;
+const SALT_ROUNDS = env.bycryptRounds;
 
 export interface UserRecord {
   firstName: string;

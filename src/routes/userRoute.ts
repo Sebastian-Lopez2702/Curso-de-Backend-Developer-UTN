@@ -4,7 +4,6 @@ import { authorizeRoles, verifyToken } from "../middleware/verifyToken";
 import { UserRepository } from "../repositories/userRepository";
 import { UserService } from "../services/userService";
 
-// Inyección manual de dependencias: Repository -> Service -> Controller.
 const userRepository = new UserRepository();
 const userService = new UserService(userRepository);
 const userController = new UserController(userService);
