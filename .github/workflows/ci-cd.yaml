@@ -2,16 +2,16 @@ name: API CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
-    tags: [ "v*" ]
+    branches: ["main"]
+    tags: ["v*"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   test:
     name: Pruebas Unitarias y de Integración
     runs-on: ubuntu-latest
-    
+
     services:
       mongodb:
         image: mongo:7
@@ -30,22 +30,20 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'yarn'
+          node-version: "26"
+          cache: "yarn"
+
+      - name: Habilitar Corepack
+        run: corepack enable
 
       - name: Instalar dependencias
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
+
+      - name: Configurar variables de entorno desde .env.example
+        run: cp .env.example .env
 
       - name: Compilar
         run: yarn build
 
       - name: Ejecutar Tests (Jest + Supertest)
-        env:
-          NODE_ENV: test
-          PORT: 3000
-          MONGO_URI: mongodb://localhost:27017/ecommerce_test_db
-          JWT_SECRET: test_secret_super_seguro
-          INITIAL_ADMIN_EMAIL: admin@test.com
-          INITIAL_ADMIN_PASSWORD: Password123!
-          INITIAL_ADMIN_DNI: 12345678
         run: yarn test
