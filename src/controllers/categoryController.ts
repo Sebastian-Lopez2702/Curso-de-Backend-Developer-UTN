@@ -1,8 +1,8 @@
-import { Request, Response } from "express";
-import { sendError } from "../middleware/errorHandler";
-import { Category } from "../models/category";
-import { CategoryService } from "../services/categoryService";
-import { successResponse } from "../utils/apiResponse";
+import { Request, Response } from 'express';
+import { sendError } from '../middleware/errorHandler';
+import { Category } from '../models/category';
+import { CategoryService } from '../services/categoryService';
+import { successResponse } from '../utils/apiResponse';
 
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
@@ -19,7 +19,7 @@ export class CategoryController {
   create = async (req: Request, res: Response): Promise<void> => {
     try {
       const category = await this.categoryService.create(req.body ?? {});
-      res.status(201).json(successResponse(this.toResponse(category), "Categoría creada correctamente"));
+      res.status(201).json(successResponse(this.toResponse(category), 'Categoría creada correctamente'));
     } catch (err) {
       sendError(res, err);
     }
@@ -28,7 +28,7 @@ export class CategoryController {
   delete = async (req: Request, res: Response): Promise<void> => {
     try {
       await this.categoryService.delete(req.params.id);
-      res.status(200).json(successResponse(null, "Categoría eliminada correctamente"));
+      res.status(200).json(successResponse(null, 'Categoría eliminada correctamente'));
     } catch (err) {
       sendError(res, err);
     }

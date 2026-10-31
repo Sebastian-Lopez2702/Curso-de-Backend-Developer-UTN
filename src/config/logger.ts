@@ -1,9 +1,9 @@
-import winston from "winston";
+import winston from 'winston';
 
-const isProd = process.env.NODE_ENV === "prod";
+const isProd = process.env.NODE_ENV === 'prod';
 
 export const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL ?? "info",
+  level: process.env.LOG_LEVEL ?? 'info',
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
@@ -18,12 +18,12 @@ export const logger = winston.createLogger({
       ),
     }),
     new winston.transports.File({
-      filename: "logs/error.log",
-      level: "error",
+      filename: 'logs/error.log',
+      level: 'error',
       silent: isProd,
     }),
     new winston.transports.File({
-      filename: "logs/combined.log",
+      filename: 'logs/combined.log',
       silent: isProd,
     }),
   ],

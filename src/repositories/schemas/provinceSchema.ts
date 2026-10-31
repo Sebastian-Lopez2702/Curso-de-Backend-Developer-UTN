@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, model } from 'mongoose';
 
 export interface ProvinceRecord {
   name: string;
@@ -13,4 +13,4 @@ const provinceSchema = new Schema<ProvinceRecord>(
   { timestamps: true },
 );
 
-export const ProvinceModel = model<ProvinceRecord>("Province", provinceSchema);
+export const ProvinceModel = model<ProvinceRecord>('Province', provinceSchema);

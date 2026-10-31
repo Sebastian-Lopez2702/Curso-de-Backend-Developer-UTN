@@ -1,11 +1,11 @@
-import { ResourceNotFoundError, ValidationError } from "../errors/DomainErrors";
-import { CreateProductDto } from "../dtos/createProductDto";
-import { ListProductsDto } from "../dtos/listProductsDto";
-import { UpdateProductDto } from "../dtos/updateProductDto";
-import { ICategoryRepository } from "../interfaces/categoryRepository";
-import { IProductRepository } from "../interfaces/productRepository";
-import { Product } from "../models/product";
-import { ProductErrorMessages } from "../models/productErrorMessages";
+import { ResourceNotFoundError, ValidationError } from '../errors/DomainErrors';
+import { CreateProductDto } from '../dtos/createProductDto';
+import { ListProductsDto } from '../dtos/listProductsDto';
+import { UpdateProductDto } from '../dtos/updateProductDto';
+import { ICategoryRepository } from '../interfaces/categoryRepository';
+import { IProductRepository } from '../interfaces/productRepository';
+import { Product } from '../models/product';
+import { ProductErrorMessages } from '../models/productErrorMessages';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
@@ -43,7 +43,7 @@ export class ProductService {
   public async getActiveById(id: string): Promise<Product> {
     const product = await this.productRepository.findById(id);
     if (product === null || !product.getIsActive()) {
-      throw new ResourceNotFoundError("Producto no encontrado");
+      throw new ResourceNotFoundError('Producto no encontrado');
     }
     return product;
   }
@@ -95,7 +95,7 @@ export class ProductService {
   private async findOwnedActiveProduct(id: string, sellerId: string): Promise<Product> {
     const product = await this.productRepository.findByIdAndSellerId(id, sellerId);
     if (product === null) {
-      throw new ResourceNotFoundError("Producto no encontrado");
+      throw new ResourceNotFoundError('Producto no encontrado');
     }
     return product;
   }

@@ -1,9 +1,9 @@
-import { Request, Response } from "express";
-import { JwtPayload } from "../interfaces/auth";
-import { sendError } from "../middleware/errorHandler";
-import { User } from "../models/user";
-import { UserService } from "../services/userService";
-import { successResponse } from "../utils/apiResponse";
+import { Request, Response } from 'express';
+import { JwtPayload } from '../interfaces/auth';
+import { sendError } from '../middleware/errorHandler';
+import { User } from '../models/user';
+import { UserService } from '../services/userService';
+import { successResponse } from '../utils/apiResponse';
 
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -11,7 +11,7 @@ export class UserController {
   register = async (req: Request, res: Response): Promise<void> => {
     try {
       const user = await this.userService.register(req.body ?? {});
-      res.status(201).json(successResponse(this.toResponse(user), "Usuario registrado correctamente"));
+      res.status(201).json(successResponse(this.toResponse(user), 'Usuario registrado correctamente'));
     } catch (err) {
       sendError(res, err);
     }
@@ -20,7 +20,7 @@ export class UserController {
   login = async (req: Request, res: Response): Promise<void> => {
     try {
       const { token, user } = await this.userService.login(req.body ?? {});
-      res.status(200).json(successResponse({ token, user: this.toResponse(user) }, "Login exitoso"));
+      res.status(200).json(successResponse({ token, user: this.toResponse(user) }, 'Login exitoso'));
     } catch (err) {
       sendError(res, err);
     }

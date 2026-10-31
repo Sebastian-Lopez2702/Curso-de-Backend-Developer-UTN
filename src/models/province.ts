@@ -1,5 +1,5 @@
-import { ErrorDetail, ValidationError } from "../errors/DomainErrors";
-import { ProvinceErrorMessages } from "./provinceErrorMessages";
+import { ErrorDetail, ValidationError } from '../errors/DomainErrors';
+import { ProvinceErrorMessages } from './provinceErrorMessages';
 
 export class Province {
   private id?: string;
@@ -31,11 +31,11 @@ export class Province {
   private validate(name?: string, shippingCost?: number): void {
     const errors: ErrorDetail[] = [];
 
-    if (typeof name !== "string" || name.trim().length === 0) {
+    if (typeof name !== 'string' || name.trim().length === 0) {
       errors.push(ProvinceErrorMessages.NAME_REQUIRED());
     }
 
-    if (typeof shippingCost !== "number" || Number.isNaN(shippingCost) || shippingCost < 0) {
+    if (typeof shippingCost !== 'number' || Number.isNaN(shippingCost) || shippingCost < 0) {
       errors.push(ProvinceErrorMessages.SHIPPING_COST_INVALID());
     }
 

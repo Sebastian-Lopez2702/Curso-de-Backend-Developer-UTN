@@ -1,5 +1,5 @@
-import { ErrorDetail, ValidationError } from "../errors/DomainErrors";
-import { CategoryErrorMessages } from "./categoryErrorMessages";
+import { ErrorDetail, ValidationError } from '../errors/DomainErrors';
+import { CategoryErrorMessages } from './categoryErrorMessages';
 
 export interface CategoryProps {
   name?: string;
@@ -36,11 +36,11 @@ export class Category {
   private validate(props: CategoryProps): void {
     const errors: ErrorDetail[] = [];
 
-    if (typeof props.name !== "string" || props.name.trim().length === 0) {
+    if (typeof props.name !== 'string' || props.name.trim().length === 0) {
       errors.push(CategoryErrorMessages.NAME_REQUIRED());
     }
 
-    if (props.description !== undefined && typeof props.description !== "string") {
+    if (props.description !== undefined && typeof props.description !== 'string') {
       errors.push(CategoryErrorMessages.DESCRIPTION_INVALID());
     }
 

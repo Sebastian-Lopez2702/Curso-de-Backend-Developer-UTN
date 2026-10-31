@@ -1,7 +1,7 @@
-import { NextFunction, Request, Response } from "express";
-import { logger } from "../config/logger";
-import { errorResponse } from "../utils/apiResponse";
-import { toHttpError } from "./errorMappers";
+import { NextFunction, Request, Response } from 'express';
+import { logger } from '../config/logger';
+import { errorResponse } from '../utils/apiResponse';
+import { toHttpError } from './errorMappers';
 
 export const sendError = (res: Response, err: unknown): void => {
   const httpError = toHttpError(err);

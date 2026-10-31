@@ -1,4 +1,4 @@
-import { User, UserRole } from "../models/user";
+import { User, UserRole } from '../models/user';
 
 export interface IUserRepository {
   save(user: User): Promise<void>;

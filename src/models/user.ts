@@ -1,11 +1,11 @@
-import bcrypt from "bcrypt";
-import { ErrorDetail, ValidationError } from "../errors/DomainErrors";
-import { UserErrorMessages } from "./userErrorMessages";
+import bcrypt from 'bcrypt';
+import { ErrorDetail, ValidationError } from '../errors/DomainErrors';
+import { UserErrorMessages } from './userErrorMessages';
 
 export const UserRole = {
-  ADMIN: "ADMIN",
-  CLIENT: "CLIENT",
-  SELLER: "SELLER",
+  ADMIN: 'ADMIN',
+  CLIENT: 'CLIENT',
+  SELLER: 'SELLER',
 } as const;
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
@@ -112,7 +112,7 @@ export class User {
       errors.push(UserErrorMessages.PASSWORD_TOO_SHORT(MIN_PASSWORD_LENGTH));
     }
 
-    if (props.phone !== undefined && typeof props.phone !== "string") {
+    if (props.phone !== undefined && typeof props.phone !== 'string') {
       errors.push(UserErrorMessages.PHONE_INVALID());
     }
 
@@ -126,6 +126,6 @@ export class User {
   }
 
   private isNonEmptyString(value: unknown): value is string {
-    return typeof value === "string" && value.trim().length > 0;
+    return typeof value === 'string' && value.trim().length > 0;
   }
 }

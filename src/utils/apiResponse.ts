@@ -11,7 +11,7 @@ export interface ApiResponse<T = unknown> {
   };
 }
 
-export const successResponse = <T>(data: T, message?: string, meta?: ApiResponse["meta"]): ApiResponse<T> => ({
+export const successResponse = <T>(data: T, message?: string, meta?: ApiResponse['meta']): ApiResponse<T> => ({
   success: true,
   data,
   message,

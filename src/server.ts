@@ -1,8 +1,8 @@
-import { env } from "./config/env";
-import { connectDB } from "./config/db";
-import { logger } from "./config/logger";
-import { runSeeder } from "./config/seeder";
-import { app } from "./app";
+import { env } from './config/env';
+import { connectDB } from './config/db';
+import { logger } from './config/logger';
+import { runSeeder } from './config/seeder';
+import { app } from './app';
 
 const start = async (): Promise<void> => {
   await connectDB();

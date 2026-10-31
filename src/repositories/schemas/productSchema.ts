@@ -1,4 +1,4 @@
-import { Schema, Types, model } from "mongoose";
+import { Schema, Types, model } from 'mongoose';
 
 export interface ProductRecord {
   sku: string;
@@ -18,8 +18,8 @@ const productSchema = new Schema<ProductRecord>(
     description: { type: String, required: true, trim: true },
     salePrice: { type: Number, required: true, min: 1 },
     stock: { type: Number, required: true, min: 0 },
-    categoryId: { type: Schema.Types.ObjectId, ref: "Category", required: true, index: true },
-    sellerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    categoryId: { type: Schema.Types.ObjectId, ref: 'Category', required: true, index: true },
+    sellerId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     isActive: { type: Boolean, required: true, default: true },
   },
   { timestamps: true },
@@ -27,4 +27,4 @@ const productSchema = new Schema<ProductRecord>(
 
 productSchema.index({ isActive: 1, categoryId: 1, createdAt: -1 });
 
-export const ProductModel = model<ProductRecord>("Product", productSchema);
+export const ProductModel = model<ProductRecord>('Product', productSchema);

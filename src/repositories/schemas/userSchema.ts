@@ -1,7 +1,7 @@
-import bcrypt from "bcrypt";
-import { Schema, Types, model } from "mongoose";
-import { env } from "../../config/env";
-import { USER_ROLES, UserRole } from "../../models/user";
+import bcrypt from 'bcrypt';
+import { Schema, Types, model } from 'mongoose';
+import { env } from '../../config/env';
+import { USER_ROLES, UserRole } from '../../models/user';
 
 const SALT_ROUNDS = env.bycryptRounds;
 
@@ -26,7 +26,7 @@ const savedAddressSchema = new Schema({
   street: { type: String, required: true },
   number: { type: String, required: true },
   city: { type: String, required: true },
-  provinceId: { type: Schema.Types.ObjectId, ref: "Province", required: true },
+  provinceId: { type: Schema.Types.ObjectId, ref: 'Province', required: true },
   zipCode: { type: String, required: true },
 });
 
@@ -44,9 +44,9 @@ const userSchema = new Schema<UserRecord>(
   { timestamps: true },
 );
 
-userSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
   this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
 });
 
-export const UserModel = model<UserRecord>("User", userSchema);
+export const UserModel = model<UserRecord>('User', userSchema);

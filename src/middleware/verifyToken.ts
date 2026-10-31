@@ -1,20 +1,20 @@
-import { NextFunction, Request, Response } from "express";
-import { AuthenticationError, NotAllowedError } from "../errors/DomainErrors";
-import { UserRole } from "../models/user";
-import { decodeToken } from "../utils/jwt";
-import { sendError } from "./errorHandler";
+import { NextFunction, Request, Response } from 'express';
+import { AuthenticationError, NotAllowedError } from '../errors/DomainErrors';
+import { UserRole } from '../models/user';
+import { decodeToken } from '../utils/jwt';
+import { sendError } from './errorHandler';
 
 export const verifyToken = (req: Request, res: Response, next: NextFunction): void => {
   const header = req.headers.authorization;
 
-  if (!header || !header.startsWith("Bearer ")) {
-    return sendError(res, new AuthenticationError("Token no proporcionado"));
+  if (!header || !header.startsWith('Bearer ')) {
+    return sendError(res, new AuthenticationError('Token no proporcionado'));
   }
 
   try {
     req.user = decodeToken(header.slice(7));
   } catch {
-    return sendError(res, new AuthenticationError("Token inválido o expirado"));
+    return sendError(res, new AuthenticationError('Token inválido o expirado'));
   }
 
   next();

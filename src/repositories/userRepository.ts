@@ -1,9 +1,9 @@
-import { isValidObjectId } from "mongoose";
-import { ValidationError } from "../errors/DomainErrors";
-import { IUserRepository } from "../interfaces/userRepository";
-import { User, UserRole } from "../models/user";
-import { UserErrorMessages } from "../models/userErrorMessages";
-import { UserModel, UserRecord } from "./schemas/userSchema";
+import { isValidObjectId } from 'mongoose';
+import { ValidationError } from '../errors/DomainErrors';
+import { IUserRepository } from '../interfaces/userRepository';
+import { User, UserRole } from '../models/user';
+import { UserErrorMessages } from '../models/userErrorMessages';
+import { UserModel, UserRecord } from './schemas/userSchema';
 
 interface MongoDuplicateError {
   code?: number;
@@ -66,7 +66,7 @@ export class UserRepository implements IUserRepository {
   private translateError(err: unknown): unknown {
     const mongoError = err as MongoDuplicateError;
     if (mongoError?.code === 11000) {
-      const field = Object.keys(mongoError.keyPattern ?? {})[0] ?? "unknown";
+      const field = Object.keys(mongoError.keyPattern ?? {})[0] ?? 'unknown';
       return new ValidationError([UserErrorMessages.DUPLICATED(field)]);
     }
     return err;

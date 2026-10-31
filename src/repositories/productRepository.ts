@@ -1,14 +1,14 @@
-import { Types, isValidObjectId } from "mongoose";
-import { ValidationError } from "../errors/DomainErrors";
-import { IProductRepository, PaginatedResult, ProductFilter } from "../interfaces/productRepository";
-import { Category } from "../models/category";
-import { Product } from "../models/product";
-import { ProductErrorMessages } from "../models/productErrorMessages";
-import { CategoryModel, CategoryRecord } from "./schemas/categorySchema";
-import { ProductModel, ProductRecord } from "./schemas/productSchema";
+import { Types, isValidObjectId } from 'mongoose';
+import { ValidationError } from '../errors/DomainErrors';
+import { IProductRepository, PaginatedResult, ProductFilter } from '../interfaces/productRepository';
+import { Category } from '../models/category';
+import { Product } from '../models/product';
+import { ProductErrorMessages } from '../models/productErrorMessages';
+import { CategoryModel, CategoryRecord } from './schemas/categorySchema';
+import { ProductModel, ProductRecord } from './schemas/productSchema';
 
 const MONGO_DUPLICATE_KEY_ERROR_CODE = 11000;
-const SPECIAL_REGEX_CHARACTERS = ".*+?^${}()|[]\\";
+const SPECIAL_REGEX_CHARACTERS = '.*+?^${}()|[]\\';
 
 interface MongoDuplicateError {
   code?: number;
@@ -90,7 +90,7 @@ export class ProductRepository implements IProductRepository {
     if (filter.searchText !== undefined) {
       const searchText = filter.searchText.trim();
       if (searchText.length > 0) {
-        const searchPattern = new RegExp(this.escapeRegex(searchText), "i");
+        const searchPattern = new RegExp(this.escapeRegex(searchText), 'i');
         query.$or = [{ name: searchPattern }, { sku: searchPattern }];
       }
     }
@@ -181,7 +181,7 @@ export class ProductRepository implements IProductRepository {
 
   private toCategoryEntity(record: StoredCategory): Category {
     let description: string | undefined = undefined;
-    if (typeof record.description === "string") {
+    if (typeof record.description === 'string') {
       description = record.description;
     }
 
@@ -191,10 +191,10 @@ export class ProductRepository implements IProductRepository {
   }
 
   private escapeRegex(text: string): string {
-    let escaped = "";
+    let escaped = '';
     for (const character of text) {
       if (SPECIAL_REGEX_CHARACTERS.includes(character)) {
-        escaped += "\\";
+        escaped += '\\';
       }
       escaped += character;
     }
@@ -205,7 +205,7 @@ export class ProductRepository implements IProductRepository {
     const mongoError = err as MongoDuplicateError;
     if (mongoError.code !== MONGO_DUPLICATE_KEY_ERROR_CODE) return err;
 
-    let field = "unknown";
+    let field = 'unknown';
     if (mongoError.keyPattern !== undefined) {
       const fields = Object.keys(mongoError.keyPattern);
       if (fields.length > 0) {

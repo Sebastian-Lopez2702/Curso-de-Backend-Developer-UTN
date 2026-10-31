@@ -1,21 +1,21 @@
-import { JwtPayload } from "../../src/interfaces/auth";
-import { Category, CategoryProps } from "../../src/models/category";
-import { Product, ProductProps } from "../../src/models/product";
-import { User, UserProps } from "../../src/models/user";
-import { CategoryRepository } from "../../src/repositories/categoryRepository";
-import { ProductRepository } from "../../src/repositories/productRepository";
-import { UserRepository } from "../../src/repositories/userRepository";
-import { signToken } from "../../src/utils/jwt";
+import { JwtPayload } from '../../src/interfaces/auth';
+import { Category, CategoryProps } from '../../src/models/category';
+import { Product, ProductProps } from '../../src/models/product';
+import { User, UserProps } from '../../src/models/user';
+import { CategoryRepository } from '../../src/repositories/categoryRepository';
+import { ProductRepository } from '../../src/repositories/productRepository';
+import { UserRepository } from '../../src/repositories/userRepository';
+import { signToken } from '../../src/utils/jwt';
 
-export const DEFAULT_PASSWORD = "secreto123";
+export const DEFAULT_PASSWORD = 'secreto123';
 
 let counter = 0;
 
 export const buildUserProps = (overrides: UserProps = {}): UserProps => {
   counter += 1;
   return {
-    firstName: "Ana",
-    lastName: "Pérez",
+    firstName: 'Ana',
+    lastName: 'Pérez',
     dni: `3000${counter}`,
     email: `ana${counter}@example.com`,
     password: DEFAULT_PASSWORD,
@@ -33,7 +33,7 @@ export const createCategory = async (overrides: CategoryProps = {}): Promise<Cat
   counter += 1;
   const category = new Category({
     name: `Categoría ${counter}`,
-    description: "Descripción",
+    description: 'Descripción',
     ...overrides,
   });
   await new CategoryRepository().save(category);
@@ -44,11 +44,11 @@ export const createCategory = async (overrides: CategoryProps = {}): Promise<Cat
 export const createProduct = async (overrides: ProductProps = {}): Promise<Product> => {
   counter += 1;
   const categoryId = overrides.categoryId ?? ((await createCategory()).getId() as string);
-  const sellerId = overrides.sellerId ?? ((await createUser({ role: "SELLER" })).getId() as string);
+  const sellerId = overrides.sellerId ?? ((await createUser({ role: 'SELLER' })).getId() as string);
   const product = new Product({
     sku: `SKU-${counter}`,
     name: `Producto ${counter}`,
-    description: "Descripción del producto",
+    description: 'Descripción del producto',
     salePrice: 1000,
     stock: 10,
     ...overrides,

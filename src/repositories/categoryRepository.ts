@@ -1,9 +1,9 @@
-import { isValidObjectId } from "mongoose";
-import { ValidationError } from "../errors/DomainErrors";
-import { ICategoryRepository } from "../interfaces/categoryRepository";
-import { Category } from "../models/category";
-import { CategoryErrorMessages } from "../models/categoryErrorMessages";
-import { CategoryModel, CategoryRecord } from "./schemas/categorySchema";
+import { isValidObjectId } from 'mongoose';
+import { ValidationError } from '../errors/DomainErrors';
+import { ICategoryRepository } from '../interfaces/categoryRepository';
+import { Category } from '../models/category';
+import { CategoryErrorMessages } from '../models/categoryErrorMessages';
+import { CategoryModel, CategoryRecord } from './schemas/categorySchema';
 
 interface MongoDuplicateError {
   code?: number;
@@ -56,7 +56,7 @@ export class CategoryRepository implements ICategoryRepository {
   private translateError(err: unknown): unknown {
     const mongoError = err as MongoDuplicateError;
     if (mongoError?.code === 11000) {
-      const field = Object.keys(mongoError.keyPattern ?? {})[0] ?? "unknown";
+      const field = Object.keys(mongoError.keyPattern ?? {})[0] ?? 'unknown';
       return new ValidationError([CategoryErrorMessages.DUPLICATED(field)]);
     }
     return err;

@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, model } from 'mongoose';
 
 export interface CategoryRecord {
   name: string;
@@ -13,4 +13,4 @@ const categorySchema = new Schema<CategoryRecord>(
   { timestamps: true },
 );
 
-export const CategoryModel = model<CategoryRecord>("Category", categorySchema);
+export const CategoryModel = model<CategoryRecord>('Category', categorySchema);

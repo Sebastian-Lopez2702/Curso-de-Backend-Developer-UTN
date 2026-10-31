@@ -1,6 +1,6 @@
-import { ErrorDetail, ValidationError } from "../errors/DomainErrors";
-import { Category } from "./category";
-import { ProductErrorMessages } from "./productErrorMessages";
+import { ErrorDetail, ValidationError } from '../errors/DomainErrors';
+import { Category } from './category';
+import { ProductErrorMessages } from './productErrorMessages';
 
 export interface ProductProps {
   sku?: string;
@@ -147,11 +147,11 @@ export class Product {
     if (!this.isNonEmptyString(props.name)) errors.push(ProductErrorMessages.NAME_REQUIRED());
     if (!this.isNonEmptyString(props.description)) errors.push(ProductErrorMessages.DESCRIPTION_REQUIRED());
 
-    if (typeof props.salePrice !== "number" || !Number.isFinite(props.salePrice) || props.salePrice < MIN_SALE_PRICE) {
+    if (typeof props.salePrice !== 'number' || !Number.isFinite(props.salePrice) || props.salePrice < MIN_SALE_PRICE) {
       errors.push(ProductErrorMessages.SALE_PRICE_INVALID(MIN_SALE_PRICE));
     }
 
-    if (typeof props.stock !== "number" || !Number.isInteger(props.stock) || props.stock < 0) {
+    if (typeof props.stock !== 'number' || !Number.isInteger(props.stock) || props.stock < 0) {
       errors.push(ProductErrorMessages.STOCK_INVALID());
     }
 
@@ -164,6 +164,6 @@ export class Product {
   }
 
   private isNonEmptyString(value: unknown): value is string {
-    return typeof value === "string" && value.trim().length > 0;
+    return typeof value === 'string' && value.trim().length > 0;
   }
 }
