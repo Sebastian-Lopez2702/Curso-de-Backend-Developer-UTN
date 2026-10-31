@@ -1,7 +1,9 @@
 import { JwtPayload } from "../../src/interfaces/auth";
 import { Category, CategoryProps } from "../../src/models/category";
+import { Product, ProductProps } from "../../src/models/product";
 import { User, UserProps } from "../../src/models/user";
 import { CategoryRepository } from "../../src/repositories/categoryRepository";
+import { ProductRepository } from "../../src/repositories/productRepository";
 import { UserRepository } from "../../src/repositories/userRepository";
 import { signToken } from "../../src/utils/jwt";
 
@@ -36,6 +38,25 @@ export const createCategory = async (overrides: CategoryProps = {}): Promise<Cat
   });
   await new CategoryRepository().save(category);
   return category;
+};
+
+/** Si no se indican categoryId / sellerId, crea una categoría y un vendedor nuevos. */
+export const createProduct = async (overrides: ProductProps = {}): Promise<Product> => {
+  counter += 1;
+  const categoryId = overrides.categoryId ?? ((await createCategory()).getId() as string);
+  const sellerId = overrides.sellerId ?? ((await createUser({ role: "SELLER" })).getId() as string);
+  const product = new Product({
+    sku: `SKU-${counter}`,
+    name: `Producto ${counter}`,
+    description: "Descripción del producto",
+    salePrice: 1000,
+    stock: 10,
+    ...overrides,
+    categoryId,
+    sellerId,
+  });
+  await new ProductRepository().save(product);
+  return product;
 };
 
 export const tokenFor = (user: User): string => {
