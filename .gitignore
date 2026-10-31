@@ -3,6 +3,15 @@
 /node_modules
 /build
 
+# Yarn Berry (modo node-modules)
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+
 # Environment
 .env
 
