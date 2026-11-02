@@ -46,3 +46,6 @@ jobs:
 
       - name: Ejecutar Tests (Jest + Supertest)
         run: yarn test
+
+      - name: Ejecutar Linter (ESLint)
+        run: yarn lint
