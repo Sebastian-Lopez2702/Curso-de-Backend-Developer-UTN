@@ -2,9 +2,10 @@ import mongoose from 'mongoose';
 import request from 'supertest';
 import { app } from '../../src/app';
 import { UserRole } from '../../src/models/user';
+import { ProductRepository } from '../../src/repositories/productRepository';
 import { CategoryModel } from '../../src/repositories/schemas/categorySchema';
 import { clearCategories, clearUsers, connectTestDb, disconnectTestDb } from '../helpers/db';
-import { createCategory, createUser, tokenFor } from '../helpers/factories';
+import { createCategory, createProduct, createUser, tokenFor } from '../helpers/factories';
 
 describe('Categoría', () => {
   beforeAll(connectTestDb);
@@ -117,6 +118,37 @@ describe('Categoría', () => {
         .set('Authorization', await bearer(UserRole.ADMIN));
       expect(res.status).toBe(200);
       expect(await CategoryModel.countDocuments()).toBe(0);
+    });
+
+    it('Debería responder 409 y no eliminar la categoría si tiene productos asociados', async () => {
+      const category = await createCategory();
+      await createProduct({ categoryId: category.getId() });
+      const res = await request(app)
+        .delete(`/api/categories/${category.getId()}`)
+        .set('Authorization', await bearer(UserRole.ADMIN));
+      expect(res.status).toBe(409);
+      expect(await CategoryModel.countDocuments()).toBe(1);
+    });
+
+    it('Debería responder 409 aunque el producto asociado esté inactivo', async () => {
+      const category = await createCategory();
+      const product = await createProduct({ categoryId: category.getId() });
+      product.deactivate();
+      await new ProductRepository().save(product);
+      const res = await request(app)
+        .delete(`/api/categories/${category.getId()}`)
+        .set('Authorization', await bearer(UserRole.ADMIN));
+      expect(res.status).toBe(409);
+    });
+
+    it('Debería eliminar la categoría si ya no tiene productos asociados', async () => {
+      const category = await createCategory();
+      await createProduct({ categoryId: category.getId() });
+      await mongoose.connection.collection('products').deleteMany({});
+      const res = await request(app)
+        .delete(`/api/categories/${category.getId()}`)
+        .set('Authorization', await bearer(UserRole.ADMIN));
+      expect(res.status).toBe(200);
     });
 
     it('Debería responder 404 si la categoría no existe', async () => {
