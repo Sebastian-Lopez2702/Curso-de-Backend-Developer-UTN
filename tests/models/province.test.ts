@@ -26,4 +26,17 @@ describe('Province', () => {
     expect(() => new Province('Salta', -1)).toThrow(ValidationError);
     expect(() => new Province('Salta', undefined)).toThrow(ValidationError);
   });
+
+  it('Debería actualizar el costo de envío', () => {
+    const province = new Province('Salta', 100);
+    province.updateShippingCost(0);
+    expect(province.getShippingCost()).toBe(0);
+  });
+
+  it('Debería rechazar un costo de envío inválido al actualizar sin modificar el valor', () => {
+    const province = new Province('Salta', 100);
+    expect(() => province.updateShippingCost(-5)).toThrow(ValidationError);
+    expect(() => province.updateShippingCost(undefined)).toThrow(ValidationError);
+    expect(province.getShippingCost()).toBe(100);
+  });
 });

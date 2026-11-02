@@ -1,9 +1,11 @@
 import { JwtPayload } from '../../src/interfaces/auth';
 import { Category, CategoryProps } from '../../src/models/category';
 import { Product, ProductProps } from '../../src/models/product';
+import { Province } from '../../src/models/province';
 import { User, UserProps } from '../../src/models/user';
 import { CategoryRepository } from '../../src/repositories/categoryRepository';
 import { ProductRepository } from '../../src/repositories/productRepository';
+import { ProvinceRepository } from '../../src/repositories/provinceRepository';
 import { UserRepository } from '../../src/repositories/userRepository';
 import { signToken } from '../../src/utils/jwt';
 
@@ -38,6 +40,13 @@ export const createCategory = async (overrides: CategoryProps = {}): Promise<Cat
   });
   await new CategoryRepository().save(category);
   return category;
+};
+
+export const createProvince = async (name?: string, shippingCost = 1000): Promise<Province> => {
+  counter += 1;
+  const province = new Province(name ?? `Provincia ${counter}`, shippingCost);
+  await new ProvinceRepository().save(province);
+  return province;
 };
 
 /** Si no se indican categoryId / sellerId, crea una categoría y un vendedor nuevos. */

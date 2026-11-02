@@ -28,6 +28,13 @@ export class Province {
     this.id = id;
   }
 
+  public updateShippingCost(shippingCost?: number): void {
+    if (typeof shippingCost !== 'number' || Number.isNaN(shippingCost) || shippingCost < 0) {
+      throw new ValidationError([ProvinceErrorMessages.SHIPPING_COST_INVALID()]);
+    }
+    this.shippingCost = shippingCost;
+  }
+
   private validate(name?: string, shippingCost?: number): void {
     const errors: ErrorDetail[] = [];
 

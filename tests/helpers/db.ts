@@ -1,5 +1,6 @@
 import { connectDB, disconnectDB } from '../../src/config/db';
 import { CategoryModel } from '../../src/repositories/schemas/categorySchema';
+import { ProvinceModel } from '../../src/repositories/schemas/provinceSchema';
 import { ProductModel } from '../../src/repositories/schemas/productSchema';
 import { UserModel } from '../../src/repositories/schemas/userSchema';
 
@@ -12,6 +13,10 @@ export const clearUsers = async (): Promise<void> => {
 
 export const clearProducts = async (): Promise<void> => {
   await ProductModel.deleteMany({});
+};
+
+export const clearProvinces = async (): Promise<void> => {
+  await ProvinceModel.deleteMany({});
 };
 
 export const clearCategories = async (): Promise<void> => {
