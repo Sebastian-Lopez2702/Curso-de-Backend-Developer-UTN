@@ -6,6 +6,7 @@ import { ICategoryRepository } from '../interfaces/categoryRepository';
 import { IProductRepository } from '../interfaces/productRepository';
 import { Product } from '../models/product';
 import { ProductErrorMessages } from '../models/productErrorMessages';
+import { getDuplicatedField, isDuplicateKeyError } from '../utils/duplicateKey';
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
@@ -64,7 +65,7 @@ export class ProductService {
     });
 
     await this.attachExistingCategory(product);
-    await this.productRepository.save(product);
+    await this.saveTranslatingDuplicates(product);
     return product;
   }
 
@@ -81,7 +82,7 @@ export class ProductService {
     });
 
     await this.attachExistingCategory(product);
-    await this.productRepository.save(product);
+    await this.saveTranslatingDuplicates(product);
     return product;
   }
 
@@ -90,6 +91,18 @@ export class ProductService {
 
     product.deactivate();
     await this.productRepository.save(product);
+  }
+
+  private async saveTranslatingDuplicates(product: Product): Promise<void> {
+    try {
+      await this.productRepository.save(product);
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        const field = getDuplicatedField(err);
+        throw new ValidationError([ProductErrorMessages.DUPLICATED(field)]);
+      }
+      throw err;
+    }
   }
 
   private async findOwnedActiveProduct(id: string, sellerId: string): Promise<Product> {

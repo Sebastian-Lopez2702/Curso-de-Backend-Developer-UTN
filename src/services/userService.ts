@@ -3,6 +3,8 @@ import { LoginDto } from '../dtos/loginDto';
 import { AuthenticationError, NotAllowedError, ResourceNotFoundError, ValidationError } from '../errors/DomainErrors';
 import { IUserRepository } from '../interfaces/userRepository';
 import { User, UserRole } from '../models/user';
+import { UserErrorMessages } from '../models/userErrorMessages';
+import { getDuplicatedField, isDuplicateKeyError } from '../utils/duplicateKey';
 import { signToken } from '../utils/jwt';
 
 export class UserService {
@@ -14,7 +16,15 @@ export class UserService {
     }
 
     const user = new User(dto);
-    await this.userRepository.save(user);
+    try {
+      await this.userRepository.save(user);
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        const field = getDuplicatedField(err);
+        throw new ValidationError([UserErrorMessages.DUPLICATED(field)]);
+      }
+      throw err;
+    }
     return user;
   }
 

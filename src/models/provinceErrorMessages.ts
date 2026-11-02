@@ -6,8 +6,4 @@ export const ProvinceErrorMessages = {
     field: 'shippingCost',
     message: 'El costo de envío debe ser un número mayor o igual a 0',
   }),
-  DUPLICATED: (field: string): ErrorDetail => ({
-    field,
-    message: `Ya existe una provincia con ese valor de ${field}`,
-  }),
 };

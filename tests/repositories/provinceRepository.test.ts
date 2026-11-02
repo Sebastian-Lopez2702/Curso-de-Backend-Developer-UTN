@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { ValidationError } from '../../src/errors/DomainErrors';
 import { Province } from '../../src/models/province';
 import { ProvinceRepository } from '../../src/repositories/provinceRepository';
 import { clearProvinces, connectTestDb, disconnectTestDb } from '../helpers/db';
@@ -21,9 +20,9 @@ describe('ProvinceRepository', () => {
     expect(province.getId()).toBeDefined();
   });
 
-  it('Debería traducir el nombre duplicado a ValidationError', async () => {
+  it('Debería propagar el error de clave duplicada sin traducirlo (lo traduce el service)', async () => {
     await createProvince('Salta');
-    await expect(repository.save(new Province('Salta', 1))).rejects.toBeInstanceOf(ValidationError);
+    await expect(repository.save(new Province('Salta', 1))).rejects.toMatchObject({ code: 11000 });
   });
 
   it('Debería actualizar el costo de envío de una provincia existente', async () => {

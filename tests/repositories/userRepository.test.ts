@@ -1,4 +1,3 @@
-import { ValidationError } from '../../src/errors/DomainErrors';
 import { User, UserRole } from '../../src/models/user';
 import { UserRepository } from '../../src/repositories/userRepository';
 import { UserModel } from '../../src/repositories/schemas/userSchema';
@@ -33,19 +32,18 @@ describe('UserRepository', () => {
       expect(await user.verifyPassword('secreto123')).toBe(true);
     });
 
-    it('Debería lanzar ValidationError si el email ya existe', async () => {
+    it('Debería propagar el error de clave duplicada si el email ya existe (lo traduce el service)', async () => {
       const existing = await createUser();
       const duplicated = new User(buildUserProps({ email: existing.getEmail() }));
 
-      await expect(repository.save(duplicated)).rejects.toBeInstanceOf(ValidationError);
-      await expect(repository.save(duplicated)).rejects.toMatchObject({ details: { email: expect.any(String) } });
+      await expect(repository.save(duplicated)).rejects.toMatchObject({ code: 11000, keyPattern: { email: 1 } });
     });
 
-    it('Debería lanzar ValidationError si el DNI ya existe', async () => {
+    it('Debería propagar el error de clave duplicada si el DNI ya existe', async () => {
       const existing = await createUser();
       const duplicated = new User(buildUserProps({ dni: existing.getDni() }));
 
-      await expect(repository.save(duplicated)).rejects.toMatchObject({ details: { dni: expect.any(String) } });
+      await expect(repository.save(duplicated)).rejects.toMatchObject({ code: 11000, keyPattern: { dni: 1 } });
     });
   });
 

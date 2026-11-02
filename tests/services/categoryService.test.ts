@@ -34,6 +34,18 @@ describe('CategoryService', () => {
   });
 
   describe('create', () => {
+    it('Debería traducir el error de clave duplicada a ValidationError', async () => {
+      repository.save.mockRejectedValue({ code: 11000, keyPattern: { name: 1 } });
+      const error = await service.create({ name: 'Textos' }).catch((e) => e);
+      expect(error).toBeInstanceOf(ValidationError);
+      expect(error.details).toHaveProperty('name');
+    });
+
+    it('Debería relanzar los errores que no son de clave duplicada', async () => {
+      const failure = new Error('db caída');
+      repository.save.mockRejectedValue(failure);
+      await expect(service.create({ name: 'Textos' })).rejects.toBe(failure);
+    });
     it('Debería guardar y devolver la categoría', async () => {
       const category = await service.create({
         name: 'Textos',

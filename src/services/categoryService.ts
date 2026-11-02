@@ -1,8 +1,10 @@
-import { ConflictError, ResourceNotFoundError } from '../errors/DomainErrors';
+import { ConflictError, ResourceNotFoundError, ValidationError } from '../errors/DomainErrors';
 import { CreateCategoryDto } from '../dtos/createCategoryDto';
 import { ICategoryRepository } from '../interfaces/categoryRepository';
 import { IProductRepository } from '../interfaces/productRepository';
 import { Category } from '../models/category';
+import { CategoryErrorMessages } from '../models/categoryErrorMessages';
+import { getDuplicatedField, isDuplicateKeyError } from '../utils/duplicateKey';
 
 export class CategoryService {
   constructor(
@@ -19,7 +21,15 @@ export class CategoryService {
       name: dto.name,
       description: dto.description,
     });
-    await this.categoryRepository.save(category);
+    try {
+      await this.categoryRepository.save(category);
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        const field = getDuplicatedField(err);
+        throw new ValidationError([CategoryErrorMessages.DUPLICATED(field)]);
+      }
+      throw err;
+    }
     return category;
   }
 

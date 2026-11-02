@@ -36,6 +36,18 @@ describe('UserService', () => {
   });
 
   describe('register', () => {
+    it('Debería traducir el error de clave duplicada a ValidationError', async () => {
+      repository.save.mockRejectedValue({ code: 11000, keyPattern: { email: 1 } });
+      const error = await service.register(buildUserProps()).catch((e) => e);
+      expect(error).toBeInstanceOf(ValidationError);
+      expect(error.details).toHaveProperty('email');
+    });
+
+    it('Debería relanzar los errores que no son de clave duplicada', async () => {
+      const failure = new Error('db caída');
+      repository.save.mockRejectedValue(failure);
+      await expect(service.register(buildUserProps())).rejects.toBe(failure);
+    });
     it('Debería guardar el usuario con rol CLIENT por defecto', async () => {
       const user = await service.register(buildUserProps());
       expect(user.getRole()).toBe(UserRole.CLIENT);

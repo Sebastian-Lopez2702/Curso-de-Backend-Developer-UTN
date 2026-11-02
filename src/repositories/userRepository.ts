@@ -1,32 +1,21 @@
 import { isValidObjectId } from 'mongoose';
-import { ValidationError } from '../errors/DomainErrors';
 import { IUserRepository } from '../interfaces/userRepository';
 import { User, UserRole } from '../models/user';
-import { UserErrorMessages } from '../models/userErrorMessages';
 import { UserModel, UserRecord } from './schemas/userSchema';
-
-interface MongoDuplicateError {
-  code?: number;
-  keyPattern?: Record<string, number>;
-}
 
 export class UserRepository implements IUserRepository {
   async save(user: User): Promise<void> {
-    try {
-      const record = await UserModel.create({
-        firstName: user.getFirstName(),
-        lastName: user.getLastName(),
-        dni: user.getDni(),
-        email: user.getEmail(),
-        phone: user.getPhone(),
-        password: user.getPassword(),
-        role: user.getRole(),
-      });
-      user.assignId(record._id.toString());
-      user.assignPasswordHash(record.password);
-    } catch (err) {
-      throw this.translateError(err);
-    }
+    const record = await UserModel.create({
+      firstName: user.getFirstName(),
+      lastName: user.getLastName(),
+      dni: user.getDni(),
+      email: user.getEmail(),
+      phone: user.getPhone(),
+      password: user.getPassword(),
+      role: user.getRole(),
+    });
+    user.assignId(record._id.toString());
+    user.assignPasswordHash(record.password);
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -61,14 +50,5 @@ export class UserRepository implements IUserRepository {
     });
     user.assignId(record._id.toString());
     return user;
-  }
-
-  private translateError(err: unknown): unknown {
-    const mongoError = err as MongoDuplicateError;
-    if (mongoError?.code === 11000) {
-      const field = Object.keys(mongoError.keyPattern ?? {})[0] ?? 'unknown';
-      return new ValidationError([UserErrorMessages.DUPLICATED(field)]);
-    }
-    return err;
   }
 }

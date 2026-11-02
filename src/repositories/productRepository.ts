@@ -7,13 +7,7 @@ import { ProductErrorMessages } from '../models/productErrorMessages';
 import { CategoryModel, CategoryRecord } from './schemas/categorySchema';
 import { ProductModel, ProductRecord } from './schemas/productSchema';
 
-const MONGO_DUPLICATE_KEY_ERROR_CODE = 11000;
 const SPECIAL_REGEX_CHARACTERS = '.*+?^${}()|[]\\';
-
-interface MongoDuplicateError {
-  code?: number;
-  keyPattern?: Record<string, number>;
-}
 
 interface StoredProduct extends ProductRecord {
   _id: Types.ObjectId;
@@ -36,16 +30,12 @@ export class ProductRepository implements IProductRepository {
       isActive: product.getIsActive(),
     };
 
-    try {
-      const id = product.getId();
-      if (id === undefined) {
-        const record = await ProductModel.create(data);
-        product.assignId(record._id.toString());
-      } else {
-        await ProductModel.findByIdAndUpdate(id, data, { runValidators: true });
-      }
-    } catch (err) {
-      throw this.translateError(err);
+    const id = product.getId();
+    if (id === undefined) {
+      const record = await ProductModel.create(data);
+      product.assignId(record._id.toString());
+    } else {
+      await ProductModel.findByIdAndUpdate(id, data, { runValidators: true });
     }
   }
 
@@ -199,19 +189,5 @@ export class ProductRepository implements IProductRepository {
       escaped += character;
     }
     return escaped;
-  }
-
-  private translateError(err: unknown): unknown {
-    const mongoError = err as MongoDuplicateError;
-    if (mongoError.code !== MONGO_DUPLICATE_KEY_ERROR_CODE) return err;
-
-    let field = 'unknown';
-    if (mongoError.keyPattern !== undefined) {
-      const fields = Object.keys(mongoError.keyPattern);
-      if (fields.length > 0) {
-        field = fields[0];
-      }
-    }
-    return new ValidationError([ProductErrorMessages.DUPLICATED(field)]);
   }
 }

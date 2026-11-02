@@ -1,26 +1,15 @@
 import { isValidObjectId } from 'mongoose';
-import { ValidationError } from '../errors/DomainErrors';
 import { ICategoryRepository } from '../interfaces/categoryRepository';
 import { Category } from '../models/category';
-import { CategoryErrorMessages } from '../models/categoryErrorMessages';
 import { CategoryModel, CategoryRecord } from './schemas/categorySchema';
-
-interface MongoDuplicateError {
-  code?: number;
-  keyPattern?: Record<string, number>;
-}
 
 export class CategoryRepository implements ICategoryRepository {
   public async save(category: Category): Promise<void> {
-    try {
-      const record = await CategoryModel.create({
-        name: category.getName(),
-        description: category.getDescription(),
-      });
-      category.assignId(record._id.toString());
-    } catch (err) {
-      throw this.translateError(err);
-    }
+    const record = await CategoryModel.create({
+      name: category.getName(),
+      description: category.getDescription(),
+    });
+    category.assignId(record._id.toString());
   }
 
   public async findById(id: string): Promise<Category | null> {
@@ -51,14 +40,5 @@ export class CategoryRepository implements ICategoryRepository {
     });
     category.assignId(record._id.toString());
     return category;
-  }
-
-  private translateError(err: unknown): unknown {
-    const mongoError = err as MongoDuplicateError;
-    if (mongoError?.code === 11000) {
-      const field = Object.keys(mongoError.keyPattern ?? {})[0] ?? 'unknown';
-      return new ValidationError([CategoryErrorMessages.DUPLICATED(field)]);
-    }
-    return err;
   }
 }

@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { ValidationError } from '../../src/errors/DomainErrors';
 import { Category } from '../../src/models/category';
 import { CategoryRepository } from '../../src/repositories/categoryRepository';
 import { clearCategories, connectTestDb, disconnectTestDb } from '../helpers/db';
@@ -22,9 +21,9 @@ describe('CategoryRepository', () => {
     expect(category.getId()).toBeDefined();
   });
 
-  it('Debería traducir el nombre duplicado a ValidationError', async () => {
+  it('Debería propagar el error de clave duplicada sin traducirlo (lo traduce el service)', async () => {
     await createCategory({ name: 'Textos' });
-    await expect(repository.save(new Category({ name: 'Textos' }))).rejects.toBeInstanceOf(ValidationError);
+    await expect(repository.save(new Category({ name: 'Textos' }))).rejects.toMatchObject({ code: 11000 });
   });
 
   it('Debería encontrar por id y devolver una entidad', async () => {

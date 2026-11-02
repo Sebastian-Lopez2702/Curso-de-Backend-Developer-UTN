@@ -91,6 +91,20 @@ describe('ProductService', () => {
       expect(error.details).toHaveProperty('categoryId');
       expect(productRepository.save).not.toHaveBeenCalled();
     });
+
+    it('Debería traducir el error de clave duplicada a ValidationError sobre sku', async () => {
+      productRepository.save.mockRejectedValue({ code: 11000, keyPattern: { sku: 1 } });
+
+      const error = await service.create(dto, SELLER_ID).catch((err) => err);
+      expect(error).toBeInstanceOf(ValidationError);
+      expect(error.details).toHaveProperty('sku');
+    });
+
+    it('Debería relanzar los errores que no son de clave duplicada', async () => {
+      const failure = new Error('db caída');
+      productRepository.save.mockRejectedValue(failure);
+      await expect(service.create(dto, SELLER_ID)).rejects.toBe(failure);
+    });
   });
 
   describe('getAll', () => {

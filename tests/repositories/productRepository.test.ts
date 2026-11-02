@@ -57,11 +57,10 @@ describe('ProductRepository', () => {
       expect(found?.getIsActive()).toBe(false);
     });
 
-    it('Debería traducir SKU duplicado a ValidationError', async () => {
+    it('Debería propagar el error de clave duplicada con SKU repetido (lo traduce el service)', async () => {
       await repository.save(await newProduct({ sku: 'DUP' }));
       const error = await repository.save(await newProduct({ sku: 'DUP' })).catch((e) => e);
-      expect(error).toBeInstanceOf(ValidationError);
-      expect(error.details).toHaveProperty('sku');
+      expect(error).toMatchObject({ code: 11000, keyPattern: { sku: 1 } });
     });
   });
 
