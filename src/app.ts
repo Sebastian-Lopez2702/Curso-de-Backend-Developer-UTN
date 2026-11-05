@@ -3,6 +3,7 @@ import cors from 'cors';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { categoryRouter } from './routes/categoryRoute';
 import { productRouter } from './routes/productRoute';
+import { provinceRouter } from './routes/provinceRoute';
 import { userRouter } from './routes/userRoute';
 import { successResponse } from './utils/apiResponse';
 
@@ -18,6 +19,7 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api/users', userRouter);
 app.use('/api/categories', categoryRouter);
 app.use('/api/products', productRouter);
+app.use('/api/provinces', provinceRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
