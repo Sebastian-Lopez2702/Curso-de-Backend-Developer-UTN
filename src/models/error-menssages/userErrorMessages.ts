@@ -1,4 +1,4 @@
-import { ErrorDetail } from '../errors/DomainErrors';
+import { ErrorDetail } from '../../errors/DomainErrors';
 
 export const UserErrorMessages = {
   FIRST_NAME_REQUIRED: (): ErrorDetail => ({ field: 'firstName', message: 'El nombre es obligatorio' }),

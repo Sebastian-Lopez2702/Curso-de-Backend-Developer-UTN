@@ -3,7 +3,7 @@ import { ValidationError } from '../errors/DomainErrors';
 import { IProductRepository, PaginatedResult, ProductFilter } from '../interfaces/productRepository';
 import { Category } from '../models/category';
 import { Product } from '../models/product';
-import { ProductErrorMessages } from '../models/productErrorMessages';
+import { ProductErrorMessages } from '../models/error-menssages/productErrorMessages';
 import { CategoryModel, CategoryRecord } from './schemas/categorySchema';
 import { ProductModel, ProductRecord } from './schemas/productSchema';
 

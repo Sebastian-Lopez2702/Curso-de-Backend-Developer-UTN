@@ -1,4 +1,4 @@
-import { ErrorDetail } from '../errors/DomainErrors';
+import { ErrorDetail } from '../../errors/DomainErrors';
 
 export const CategoryErrorMessages = {
   NAME_REQUIRED: (): ErrorDetail => ({

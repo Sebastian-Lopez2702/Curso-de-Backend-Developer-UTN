@@ -1,4 +1,4 @@
-import { ErrorDetail } from '../errors/DomainErrors';
+import { ErrorDetail } from '../../errors/DomainErrors';
 
 export const OrderErrorMessages = {
   USER_REQUIRED: (): ErrorDetail => ({

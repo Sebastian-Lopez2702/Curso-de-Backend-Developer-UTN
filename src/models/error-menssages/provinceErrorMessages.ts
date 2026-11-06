@@ -1,4 +1,4 @@
-import { ErrorDetail } from '../errors/DomainErrors';
+import { ErrorDetail } from '../../errors/DomainErrors';
 
 export const ProvinceErrorMessages = {
   NAME_REQUIRED: (): ErrorDetail => ({ field: 'name', message: 'El nombre de la provincia es obligatorio' }),

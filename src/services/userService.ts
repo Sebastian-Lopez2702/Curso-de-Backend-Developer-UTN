@@ -3,12 +3,12 @@ import { LoginDto } from '../dtos/loginDto';
 import { AuthenticationError, NotAllowedError, ResourceNotFoundError, ValidationError } from '../errors/DomainErrors';
 import { IUserRepository } from '../interfaces/userRepository';
 import { User, UserRole } from '../models/user';
-import { UserErrorMessages } from '../models/userErrorMessages';
+import { UserErrorMessages } from '../models/error-menssages/userErrorMessages';
 import { getDuplicatedField, isDuplicateKeyError } from '../utils/duplicateKey';
 import { signToken } from '../utils/jwt';
 
 export class UserService {
-  constructor(private readonly userRepository: IUserRepository) {}
+  constructor(private readonly userRepository: IUserRepository) { }
 
   public async register(dto: RegisterUserDto): Promise<User> {
     if (dto.role === UserRole.ADMIN) {

@@ -3,14 +3,14 @@ import { ResourceNotFoundError, ValidationError } from '../errors/DomainErrors';
 import { IOrderRepository } from '../interfaces/orderRepository';
 import { IProductRepository } from '../interfaces/productRepository';
 import { Order, OrderStatus } from '../models/order';
-import { OrderErrorMessages } from '../models/orderErrorMessages';
+import { OrderErrorMessages } from '../models/error-menssages/orderErrorMessages';
 import { isDuplicateKeyError } from '../utils/duplicateKey';
 
 export class OrderService {
   constructor(
     private readonly orderRepository: IOrderRepository,
     private readonly productRepository: IProductRepository,
-  ) {}
+  ) { }
 
   public async getCart(userId: string): Promise<Order> {
     const cart = await this.orderRepository.findCartByUserId(userId);

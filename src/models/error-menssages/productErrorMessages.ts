@@ -1,4 +1,4 @@
-import { ErrorDetail } from '../errors/DomainErrors';
+import { ErrorDetail } from '../../errors/DomainErrors';
 
 export const ProductErrorMessages = {
   SKU_REQUIRED: (): ErrorDetail => ({

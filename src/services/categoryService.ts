@@ -3,14 +3,14 @@ import { CreateCategoryDto } from '../dtos/createCategoryDto';
 import { ICategoryRepository } from '../interfaces/categoryRepository';
 import { IProductRepository } from '../interfaces/productRepository';
 import { Category } from '../models/category';
-import { CategoryErrorMessages } from '../models/categoryErrorMessages';
+import { CategoryErrorMessages } from '../models/error-menssages/categoryErrorMessages';
 import { getDuplicatedField, isDuplicateKeyError } from '../utils/duplicateKey';
 
 export class CategoryService {
   constructor(
     private readonly categoryRepository: ICategoryRepository,
     private readonly productRepository: IProductRepository,
-  ) {}
+  ) { }
 
   public async getAll(): Promise<Category[]> {
     return this.categoryRepository.findAll();

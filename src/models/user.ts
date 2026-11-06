@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { ErrorDetail, ValidationError } from '../errors/DomainErrors';
-import { UserErrorMessages } from './userErrorMessages';
+import { UserErrorMessages } from './error-menssages/userErrorMessages';
 
 export const UserRole = {
   ADMIN: 'ADMIN',
