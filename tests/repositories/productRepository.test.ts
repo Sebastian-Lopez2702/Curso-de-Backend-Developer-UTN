@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { ValidationError } from '../../src/errors/DomainErrors';
 import { Category } from '../../src/models/category';
 import { Product } from '../../src/models/product';
 import { ProductRepository } from '../../src/repositories/productRepository';
@@ -234,12 +233,12 @@ describe('ProductRepository', () => {
       expect(await repository.decrementStock('xxx', 1)).toBe(false);
     });
 
-    it('Debería rechazar cantidades inválidas', async () => {
+    it('Debería devolver false con cantidades inválidas', async () => {
       const product = await createProduct();
       const id = product.getId() as string;
-      await expect(repository.decrementStock(id, 0)).rejects.toBeInstanceOf(ValidationError);
-      await expect(repository.decrementStock(id, -1)).rejects.toBeInstanceOf(ValidationError);
-      await expect(repository.decrementStock(id, 1.5)).rejects.toBeInstanceOf(ValidationError);
+      expect(await repository.decrementStock(id, 0)).toBe(false);
+      expect(await repository.decrementStock(id, -1)).toBe(false);
+      expect(await repository.decrementStock(id, 1.5)).toBe(false);
     });
   });
 

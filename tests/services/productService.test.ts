@@ -245,4 +245,22 @@ describe('ProductService', () => {
       await expect(service.delete('x', SELLER_ID)).rejects.toBeInstanceOf(ResourceNotFoundError);
     });
   });
+
+  describe('decrementStock', () => {
+    it('Debería descontar stock cuando la cantidad es válida', async () => {
+      productRepository.decrementStock.mockResolvedValue(true);
+
+      const result = await service.decrementStock('product-1', 2);
+
+      expect(productRepository.decrementStock).toHaveBeenCalledWith('product-1', 2);
+      expect(result).toBe(true);
+    });
+
+    it('Debería lanzar ValidationError si la cantidad no es un entero mayor a 0', async () => {
+      await expect(service.decrementStock('product-1', 0)).rejects.toBeInstanceOf(ValidationError);
+      await expect(service.decrementStock('product-1', -1)).rejects.toBeInstanceOf(ValidationError);
+      await expect(service.decrementStock('product-1', 1.5)).rejects.toBeInstanceOf(ValidationError);
+      expect(productRepository.decrementStock).not.toHaveBeenCalled();
+    });
+  });
 });

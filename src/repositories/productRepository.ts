@@ -1,9 +1,7 @@
 import { Types, isValidObjectId } from 'mongoose';
-import { ValidationError } from '../errors/DomainErrors';
 import { IProductRepository, PaginatedResult, ProductFilter } from '../interfaces/productRepository';
 import { Category } from '../models/category';
 import { Product } from '../models/product';
-import { ProductErrorMessages } from '../models/error-menssages/productErrorMessages';
 import { CategoryModel, CategoryRecord } from './schemas/categorySchema';
 import { ProductModel, ProductRecord } from './schemas/productSchema';
 
@@ -100,10 +98,7 @@ export class ProductRepository implements IProductRepository {
   }
 
   public async decrementStock(id: string, quantity: number): Promise<boolean> {
-    if (!Number.isInteger(quantity) || quantity <= 0) {
-      throw new ValidationError([ProductErrorMessages.QUANTITY_INVALID()]);
-    }
-    if (!isValidObjectId(id)) return false;
+    if (!isValidObjectId(id) || !Number.isInteger(quantity) || quantity <= 0) return false;
 
     const onlyIfStockIsEnough = { _id: id, isActive: true, stock: { $gte: quantity } };
     const quantityToSubtract = -quantity;
