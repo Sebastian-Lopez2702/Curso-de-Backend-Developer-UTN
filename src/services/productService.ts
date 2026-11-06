@@ -24,7 +24,7 @@ export class ProductService {
   constructor(
     private readonly productRepository: IProductRepository,
     private readonly categoryRepository: ICategoryRepository,
-  ) { }
+  ) {}
 
   public async getAll(dto: ListProductsDto): Promise<ProductPage> {
     const page = this.normalizePage(dto.page);

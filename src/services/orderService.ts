@@ -10,7 +10,7 @@ export class OrderService {
   constructor(
     private readonly orderRepository: IOrderRepository,
     private readonly productRepository: IProductRepository,
-  ) { }
+  ) {}
 
   public async getCart(userId: string): Promise<Order> {
     const cart = await this.orderRepository.findCartByUserId(userId);

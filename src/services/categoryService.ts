@@ -10,7 +10,7 @@ export class CategoryService {
   constructor(
     private readonly categoryRepository: ICategoryRepository,
     private readonly productRepository: IProductRepository,
-  ) { }
+  ) {}
 
   public async getAll(): Promise<Category[]> {
     return this.categoryRepository.findAll();
