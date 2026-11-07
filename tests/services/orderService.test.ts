@@ -154,4 +154,103 @@ describe('OrderService', () => {
       expect(orderRepositoryMock.save).toHaveBeenCalledWith(existingCart);
     });
   });
+
+  describe('updateCartItemQuantity', () => {
+    it('Debería rechazar si quantity falta o no es un entero mayor a 0', async () => {
+      await expect(orderService.updateCartItemQuantity(USER_ID, PRODUCT_ID, {})).rejects.toThrow(ValidationError);
+      await expect(orderService.updateCartItemQuantity(USER_ID, PRODUCT_ID, { quantity: 0 })).rejects.toThrow(
+        ValidationError,
+      );
+      await expect(orderService.updateCartItemQuantity(USER_ID, PRODUCT_ID, { quantity: -5 })).rejects.toThrow(
+        ValidationError,
+      );
+      await expect(orderService.updateCartItemQuantity(USER_ID, PRODUCT_ID, { quantity: 2.5 })).rejects.toThrow(
+        ValidationError,
+      );
+    });
+
+    it('Debería lanzar ValidationError si el usuario no tiene carrito', async () => {
+      orderRepositoryMock.findCartByUserId.mockResolvedValue(null);
+
+      await expect(orderService.updateCartItemQuantity(USER_ID, PRODUCT_ID, { quantity: 3 })).rejects.toThrow(
+        ValidationError,
+      );
+    });
+
+    it('Debería lanzar ResourceNotFoundError si el producto no existe', async () => {
+      const cart = new Order({ userId: USER_ID, orderStatus: OrderStatus.CART });
+      cart.addItem({ productId: PRODUCT_ID, quantity: 1 });
+      orderRepositoryMock.findCartByUserId.mockResolvedValue(cart);
+      productRepositoryMock.findById.mockResolvedValue(null);
+
+      await expect(orderService.updateCartItemQuantity(USER_ID, PRODUCT_ID, { quantity: 3 })).rejects.toThrow(
+        ResourceNotFoundError,
+      );
+    });
+
+    it('Debería lanzar ValidationError si el producto está inactivo', async () => {
+      const cart = new Order({ userId: USER_ID, orderStatus: OrderStatus.CART });
+      cart.addItem({ productId: PRODUCT_ID, quantity: 1 });
+      orderRepositoryMock.findCartByUserId.mockResolvedValue(cart);
+
+      const inactiveProduct = buildActiveProduct({ isActive: false });
+      productRepositoryMock.findById.mockResolvedValue(inactiveProduct);
+
+      await expect(orderService.updateCartItemQuantity(USER_ID, PRODUCT_ID, { quantity: 3 })).rejects.toThrow(
+        ValidationError,
+      );
+    });
+
+    it('Debería lanzar ValidationError si el producto no está en el carrito', async () => {
+      const cart = new Order({ userId: USER_ID, orderStatus: OrderStatus.CART });
+      orderRepositoryMock.findCartByUserId.mockResolvedValue(cart);
+
+      const product = buildActiveProduct();
+      productRepositoryMock.findById.mockResolvedValue(product);
+
+      await expect(orderService.updateCartItemQuantity(USER_ID, PRODUCT_ID, { quantity: 3 })).rejects.toThrow(
+        ValidationError,
+      );
+    });
+
+    it('Debería actualizar la cantidad del ítem y persistir el carrito', async () => {
+      const cart = new Order({ userId: USER_ID, orderStatus: OrderStatus.CART });
+      cart.addItem({ productId: PRODUCT_ID, quantity: 1 });
+      orderRepositoryMock.findCartByUserId.mockResolvedValue(cart);
+
+      const product = buildActiveProduct();
+      productRepositoryMock.findById.mockResolvedValue(product);
+
+      const updated = await orderService.updateCartItemQuantity(USER_ID, PRODUCT_ID, { quantity: 4 });
+
+      expect(updated.getItems()[0].getQuantity()).toBe(4);
+      expect(orderRepositoryMock.save).toHaveBeenCalledWith(cart);
+    });
+  });
+
+  describe('removeCartItem', () => {
+    it('Debería lanzar ValidationError si el usuario no tiene carrito', async () => {
+      orderRepositoryMock.findCartByUserId.mockResolvedValue(null);
+
+      await expect(orderService.removeCartItem(USER_ID, PRODUCT_ID)).rejects.toThrow(ValidationError);
+    });
+
+    it('Debería lanzar ValidationError si el ítem no está en el carrito', async () => {
+      const cart = new Order({ userId: USER_ID, orderStatus: OrderStatus.CART });
+      orderRepositoryMock.findCartByUserId.mockResolvedValue(cart);
+
+      await expect(orderService.removeCartItem(USER_ID, PRODUCT_ID)).rejects.toThrow(ValidationError);
+    });
+
+    it('Debería eliminar el ítem del carrito y persistir los cambios', async () => {
+      const cart = new Order({ userId: USER_ID, orderStatus: OrderStatus.CART });
+      cart.addItem({ productId: PRODUCT_ID, quantity: 2 });
+      orderRepositoryMock.findCartByUserId.mockResolvedValue(cart);
+
+      const updated = await orderService.removeCartItem(USER_ID, PRODUCT_ID);
+
+      expect(updated.getItems()).toHaveLength(0);
+      expect(orderRepositoryMock.save).toHaveBeenCalledWith(cart);
+    });
+  });
 });

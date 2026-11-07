@@ -1,4 +1,5 @@
 import { AddToCartDto } from '../dtos/addToCartDto';
+import { UpdateCartItemDto } from '../dtos/updateCartItemDto';
 import { ResourceNotFoundError, ValidationError } from '../errors/DomainErrors';
 import { IOrderRepository } from '../interfaces/orderRepository';
 import { IProductRepository } from '../interfaces/productRepository';
@@ -64,6 +65,60 @@ export class OrderService {
     }
 
     return cart;
+  }
+
+  public async updateCartItemQuantity(userId: string, productId: string, dto: UpdateCartItemDto): Promise<Order> {
+    const quantity = this.validateUpdateQuantity(dto);
+
+    const cart = await this.orderRepository.findCartByUserId(userId);
+    if (!cart) {
+      throw new ValidationError([OrderErrorMessages.ITEM_NOT_FOUND()]);
+    }
+
+    const product = await this.productRepository.findById(productId);
+    if (!product) {
+      throw new ResourceNotFoundError('Producto no encontrado');
+    }
+
+    if (!product.getIsActive()) {
+      throw new ValidationError([OrderErrorMessages.PRODUCT_INACTIVE()]);
+    }
+
+    cart.updateItemQuantity(productId, quantity);
+    await this.orderRepository.save(cart);
+
+    return cart;
+  }
+
+  public async removeCartItem(userId: string, productId: string): Promise<Order> {
+    const cart = await this.orderRepository.findCartByUserId(userId);
+    if (!cart) {
+      throw new ValidationError([OrderErrorMessages.ITEM_NOT_FOUND()]);
+    }
+
+    cart.removeItem(productId);
+    await this.orderRepository.save(cart);
+
+    return cart;
+  }
+
+  private validateUpdateQuantity(dto: UpdateCartItemDto): number {
+    const errors = [];
+
+    if (
+      dto.quantity === undefined ||
+      typeof dto.quantity !== 'number' ||
+      !Number.isInteger(dto.quantity) ||
+      dto.quantity <= 0
+    ) {
+      errors.push(OrderErrorMessages.QUANTITY_INVALID());
+    }
+
+    if (errors.length > 0) {
+      throw new ValidationError(errors);
+    }
+
+    return dto.quantity as number;
   }
 
   private validateAddToCartDto(dto: AddToCartDto): { productId: string; quantity: number } {

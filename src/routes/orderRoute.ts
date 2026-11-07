@@ -15,5 +15,7 @@ const router = Router();
 
 router.get('/cart', verifyToken, authorizeRoles(UserRole.CLIENT), orderController.getCart);
 router.post('/cart', verifyToken, authorizeRoles(UserRole.CLIENT), orderController.addToCart);
+router.put('/cart/items/:productId', verifyToken, authorizeRoles(UserRole.CLIENT), orderController.updateCartItem);
+router.delete('/cart/items/:productId', verifyToken, authorizeRoles(UserRole.CLIENT), orderController.removeCartItem);
 
 export { router as orderRouter };

@@ -172,7 +172,7 @@ describe('Order - Carrito', () => {
       const res = await request(app)
         .post('/api/orders/cart')
         .set('Authorization', client.authorization)
-        .send({ productId: '507f1f77bcf86cd799439011', quantity: 1 });
+        .send({ productId: 'FictitiousProductId', quantity: 1 });
 
       expect(res.status).toBe(404);
     });
@@ -265,6 +265,180 @@ describe('Order - Carrito', () => {
       expect(res.body.data.items).toHaveLength(2);
       expect(res.body.data.items[0].productId).toBe(product1.getId());
       expect(res.body.data.items[1].productId).toBe(product2.getId());
+    });
+  });
+
+  describe('PUT /api/orders/cart/items/:productId', () => {
+    it('Debería responder 401 si no se envía token', async () => {
+      const res = await request(app).put('/api/orders/cart/items/FictitiousProductId').send({ quantity: 2 });
+      expect(res.status).toBe(401);
+    });
+
+    it('Debería responder 403 para usuarios no CLIENT', async () => {
+      const seller = await createSeller();
+      const res = await request(app)
+        .put('/api/orders/cart/items/FictitiousProductId')
+        .set('Authorization', seller.authorization)
+        .send({ quantity: 2 });
+      expect(res.status).toBe(403);
+    });
+
+    it('Debería responder 400 si quantity no es un entero mayor a 0', async () => {
+      const client = await createClient();
+      const product = await createProduct();
+
+      const resEmpty = await request(app)
+        .put(`/api/orders/cart/items/${product.getId()}`)
+        .set('Authorization', client.authorization)
+        .send({});
+      expect(resEmpty.status).toBe(400);
+
+      const resZero = await request(app)
+        .put(`/api/orders/cart/items/${product.getId()}`)
+        .set('Authorization', client.authorization)
+        .send({ quantity: 0 });
+      expect(resZero.status).toBe(400);
+
+      const resDecimal = await request(app)
+        .put(`/api/orders/cart/items/${product.getId()}`)
+        .set('Authorization', client.authorization)
+        .send({ quantity: 2.5 });
+      expect(resDecimal.status).toBe(400);
+    });
+
+    it('Debería responder 404 si el producto no existe', async () => {
+      const client = await createClient();
+      const product = await createProduct();
+
+      // Creamos carrito primero
+      await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product.getId(), quantity: 1 });
+
+      const res = await request(app)
+        .put('/api/orders/cart/items/FictitiousProductId')
+        .set('Authorization', client.authorization)
+        .send({ quantity: 3 });
+
+      expect(res.status).toBe(404);
+    });
+
+    it('Debería responder 400 si el producto está inactivo', async () => {
+      const client = await createClient();
+      const product = await createProduct();
+
+      await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product.getId(), quantity: 1 });
+
+      await ProductModel.findByIdAndUpdate(product.getId(), { isActive: false });
+
+      const res = await request(app)
+        .put(`/api/orders/cart/items/${product.getId()}`)
+        .set('Authorization', client.authorization)
+        .send({ quantity: 3 });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('Debería responder 400 si el ítem no está en el carrito', async () => {
+      const client = await createClient();
+      const product1 = await createProduct();
+      const product2 = await createProduct();
+
+      await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product1.getId(), quantity: 1 });
+
+      const res = await request(app)
+        .put(`/api/orders/cart/items/${product2.getId()}`)
+        .set('Authorization', client.authorization)
+        .send({ quantity: 3 });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('Debería actualizar la cantidad del ítem correctamente', async () => {
+      const client = await createClient();
+      const product = await createProduct();
+
+      await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product.getId(), quantity: 2 });
+
+      const res = await request(app)
+        .put(`/api/orders/cart/items/${product.getId()}`)
+        .set('Authorization', client.authorization)
+        .send({ quantity: 5 });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.items[0].quantity).toBe(5);
+    });
+  });
+
+  describe('DELETE /api/orders/cart/items/:productId', () => {
+    it('Debería responder 401 si no se envía token', async () => {
+      const res = await request(app).delete('/api/orders/cart/items/FictitiousProductId');
+      expect(res.status).toBe(401);
+    });
+
+    it('Debería responder 403 para usuarios no CLIENT', async () => {
+      const seller = await createSeller();
+      const res = await request(app)
+        .delete('/api/orders/cart/items/FictitiousProductId')
+        .set('Authorization', seller.authorization);
+      expect(res.status).toBe(403);
+    });
+
+    it('Debería responder 400 si el usuario no tiene carrito o el ítem no existe en el carrito', async () => {
+      const client = await createClient();
+      const product = await createProduct();
+
+      const resNoCart = await request(app)
+        .delete(`/api/orders/cart/items/${product.getId()}`)
+        .set('Authorization', client.authorization);
+      expect(resNoCart.status).toBe(400);
+
+      // Creamos carrito con otro producto
+      const otherProduct = await createProduct();
+      await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: otherProduct.getId(), quantity: 1 });
+
+      const resNotPresent = await request(app)
+        .delete(`/api/orders/cart/items/${product.getId()}`)
+        .set('Authorization', client.authorization);
+      expect(resNotPresent.status).toBe(400);
+    });
+
+    it('Debería eliminar el ítem del carrito exitosamente', async () => {
+      const client = await createClient();
+      const product1 = await createProduct();
+      const product2 = await createProduct();
+
+      await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product1.getId(), quantity: 2 });
+      await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product2.getId(), quantity: 1 });
+
+      const res = await request(app)
+        .delete(`/api/orders/cart/items/${product1.getId()}`)
+        .set('Authorization', client.authorization);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.items).toHaveLength(1);
+      expect(res.body.data.items[0].productId).toBe(product2.getId());
     });
   });
 });
