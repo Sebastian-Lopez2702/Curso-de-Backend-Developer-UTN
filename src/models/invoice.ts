@@ -1,9 +1,12 @@
+import { ErrorDetail, ValidationError } from '../errors/DomainErrors';
+import { InvoiceErrorMessages } from './error-messages/invoiceErrorMessages';
+
 export interface InvoiceProps {
   invoiceType?: string;
-  subtotal: number;
-  tax: number;
-  shippingCost: number;
-  total: number;
+  subtotal?: number;
+  tax?: number;
+  shippingCost?: number;
+  total?: number;
   date?: Date;
 }
 
@@ -16,11 +19,12 @@ export class Invoice {
   private date: Date;
 
   constructor(props: InvoiceProps) {
-    this.invoiceType = props.invoiceType ?? 'B';
-    this.subtotal = props.subtotal;
-    this.tax = props.tax;
-    this.shippingCost = props.shippingCost;
-    this.total = props.total;
+    this.validate(props);
+    this.invoiceType = (props.invoiceType ?? 'B').trim();
+    this.subtotal = props.subtotal as number;
+    this.tax = props.tax as number;
+    this.shippingCost = props.shippingCost as number;
+    this.total = props.total as number;
     this.date = props.date ?? new Date();
   }
 
@@ -46,5 +50,44 @@ export class Invoice {
 
   public getDate(): Date {
     return this.date;
+  }
+
+  private validate(props: InvoiceProps): void {
+    const errors: ErrorDetail[] = [];
+
+    if (
+      props.invoiceType !== undefined &&
+      (typeof props.invoiceType !== 'string' || props.invoiceType.trim().length === 0)
+    ) {
+      errors.push(InvoiceErrorMessages.INVOICE_TYPE_INVALID());
+    }
+
+    if (!this.isValidAmount(props.subtotal)) {
+      errors.push(InvoiceErrorMessages.SUBTOTAL_INVALID());
+    }
+
+    if (!this.isValidAmount(props.tax)) {
+      errors.push(InvoiceErrorMessages.TAX_INVALID());
+    }
+
+    if (!this.isValidAmount(props.shippingCost)) {
+      errors.push(InvoiceErrorMessages.SHIPPING_COST_INVALID());
+    }
+
+    if (!this.isValidAmount(props.total)) {
+      errors.push(InvoiceErrorMessages.TOTAL_INVALID());
+    }
+
+    if (props.date !== undefined && (!(props.date instanceof Date) || Number.isNaN(props.date.getTime()))) {
+      errors.push(InvoiceErrorMessages.DATE_INVALID());
+    }
+
+    if (errors.length > 0) {
+      throw new ValidationError(errors);
+    }
+  }
+
+  private isValidAmount(value: unknown): value is number {
+    return typeof value === 'number' && Number.isFinite(value) && value >= 0;
   }
 }
