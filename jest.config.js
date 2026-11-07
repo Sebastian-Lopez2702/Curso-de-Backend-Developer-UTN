@@ -1,6 +1,10 @@
 // Los tests usan los valores de .env.example (dotenv no pisa variables ya definidas, p. ej. en CI).
 require('dotenv').config({ path: '.env.example' });
 
+// Salt rounds mínimos en entorno de test para acelerar la ejecución
+process.env.BCRIPT_ROUNDS = '4';
+process.env.BYCRIPT_ROUNDS = '4';
+
 const dbName = (process.env.MONGO_URI || '').split('/').pop().split('?')[0];
 if (!dbName.endsWith('_test_db')) {
   throw new Error(
@@ -14,4 +18,12 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/tests'],
   passWithNoTests: true,
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        diagnostics: false,
+      },
+    ],
+  },
 };
