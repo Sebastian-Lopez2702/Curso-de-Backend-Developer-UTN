@@ -3,7 +3,7 @@ import { LoginDto } from '../dtos/loginDto';
 import { AuthenticationError, NotAllowedError, ResourceNotFoundError, ValidationError } from '../errors/DomainErrors';
 import { IUserRepository } from '../interfaces/userRepository';
 import { User, UserRole } from '../models/user';
-import { UserErrorMessages } from '../models/error-menssages/userErrorMessages';
+import { UserErrorMessages } from '../models/error-messages/userErrorMessages';
 import { getDuplicatedField, isDuplicateKeyError } from '../utils/duplicateKey';
 import { signToken } from '../utils/jwt';
 

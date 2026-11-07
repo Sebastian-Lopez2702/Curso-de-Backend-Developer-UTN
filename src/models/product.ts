@@ -1,6 +1,6 @@
 import { ErrorDetail, ValidationError } from '../errors/DomainErrors';
 import { Category } from './category';
-import { ProductErrorMessages } from './error-menssages/productErrorMessages';
+import { ProductErrorMessages } from './error-messages/productErrorMessages';
 
 export interface ProductProps {
   sku?: string;

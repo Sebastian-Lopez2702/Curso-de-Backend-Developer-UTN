@@ -1,5 +1,5 @@
 import { ErrorDetail, ValidationError } from '../errors/DomainErrors';
-import { OrderErrorMessages } from './error-menssages/orderErrorMessages';
+import { OrderErrorMessages } from './error-messages/orderErrorMessages';
 import { OrderItem, OrderItemProps } from './orderItems';
 import { Invoice, InvoiceProps } from './invoice';
 import { Shipping, ShippingProps } from './shipping';

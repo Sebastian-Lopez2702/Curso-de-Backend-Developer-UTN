@@ -1,5 +1,5 @@
 import { ErrorDetail, ValidationError } from '../errors/DomainErrors';
-import { CategoryErrorMessages } from './error-menssages/categoryErrorMessages';
+import { CategoryErrorMessages } from './error-messages/categoryErrorMessages';
 
 export interface CategoryProps {
   name?: string;

@@ -3,7 +3,7 @@ import { ResourceNotFoundError, ValidationError } from '../errors/DomainErrors';
 import { IOrderRepository } from '../interfaces/orderRepository';
 import { IProductRepository } from '../interfaces/productRepository';
 import { Order, OrderStatus } from '../models/order';
-import { OrderErrorMessages } from '../models/error-menssages/orderErrorMessages';
+import { OrderErrorMessages } from '../models/error-messages/orderErrorMessages';
 import { isDuplicateKeyError } from '../utils/duplicateKey';
 
 export class OrderService {

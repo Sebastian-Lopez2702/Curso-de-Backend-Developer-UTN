@@ -1,5 +1,5 @@
 import { ErrorDetail, ValidationError } from '../errors/DomainErrors';
-import { ProvinceErrorMessages } from './error-menssages/provinceErrorMessages';
+import { ProvinceErrorMessages } from './error-messages/provinceErrorMessages';
 
 export class Province {
   private id?: string;

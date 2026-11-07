@@ -3,7 +3,7 @@ import { CreateCategoryDto } from '../dtos/createCategoryDto';
 import { ICategoryRepository } from '../interfaces/categoryRepository';
 import { IProductRepository } from '../interfaces/productRepository';
 import { Category } from '../models/category';
-import { CategoryErrorMessages } from '../models/error-menssages/categoryErrorMessages';
+import { CategoryErrorMessages } from '../models/error-messages/categoryErrorMessages';
 import { getDuplicatedField, isDuplicateKeyError } from '../utils/duplicateKey';
 
 export class CategoryService {

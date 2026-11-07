@@ -1,5 +1,5 @@
 import { ErrorDetail, ValidationError } from '../errors/DomainErrors';
-import { OrderErrorMessages } from './error-menssages/orderErrorMessages';
+import { OrderErrorMessages } from './error-messages/orderErrorMessages';
 
 export interface OrderItemProps {
   productId: string;

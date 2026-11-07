@@ -5,7 +5,7 @@ import { UpdateProductDto } from '../dtos/updateProductDto';
 import { ICategoryRepository } from '../interfaces/categoryRepository';
 import { IProductRepository } from '../interfaces/productRepository';
 import { Product } from '../models/product';
-import { ProductErrorMessages } from '../models/error-menssages/productErrorMessages';
+import { ProductErrorMessages } from '../models/error-messages/productErrorMessages';
 import { getDuplicatedField, isDuplicateKeyError } from '../utils/duplicateKey';
 
 const DEFAULT_PAGE = 1;
