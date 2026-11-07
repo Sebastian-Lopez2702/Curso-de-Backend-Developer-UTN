@@ -5,7 +5,7 @@ dotenv.config();
 const REQUIRED_VARS = [
   'PORT',
   'MONGO_URI',
-  'BYCRIPT_ROUNDS',
+  'BCRIPT_ROUNDS',
   'JWT_SECRET',
   'INITIAL_ADMIN_EMAIL',
   'INITIAL_ADMIN_PASSWORD',
@@ -21,7 +21,7 @@ if (missing.length > 0) {
 export const env = {
   port: Number(process.env.PORT),
   mongoUri: process.env.MONGO_URI as string,
-  bycryptRounds: Number(process.env.BYCRIPT_ROUNDS),
+  bcryptRounds: Number(process.env.BYCRIPT_ROUNDS),
   jwtSecret: process.env.JWT_SECRET as string,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '1h',
   initialAdmin: {

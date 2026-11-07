@@ -3,7 +3,7 @@ import { Schema, Types, model } from 'mongoose';
 import { env } from '../../config/env';
 import { USER_ROLES, UserRole } from '../../models/user';
 
-const SALT_ROUNDS = env.bycryptRounds;
+const SALT_ROUNDS = env.bcryptRounds;
 
 export interface UserRecord {
   firstName: string;
