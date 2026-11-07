@@ -29,6 +29,22 @@ export const OrderErrorMessages = {
     field: 'items',
     message: 'El carrito no contiene productos',
   }),
+  PROVINCE_REQUIRED: (): ErrorDetail => ({
+    field: 'provinceId',
+    message: 'La provincia de envío es obligatoria',
+  }),
+  ADDRESS_REQUIRED: (): ErrorDetail => ({
+    field: 'address',
+    message: 'La dirección de envío es obligatoria',
+  }),
+  ORDER_NOT_IN_CART_STATUS: (): ErrorDetail => ({
+    field: 'orderStatus',
+    message: 'La orden no se encuentra en estado CART para realizar el checkout',
+  }),
+  INSUFFICIENT_STOCK: (productNameOrId: string): ErrorDetail => ({
+    field: 'stock',
+    message: `Stock insuficiente o producto no disponible para ${productNameOrId}`,
+  }),
   INVALID_STATUS_TRANSITION: (current: string, next: string): ErrorDetail => ({
     field: 'orderStatus',
     message: `No se puede cambiar el estado de ${current} a ${next}`,

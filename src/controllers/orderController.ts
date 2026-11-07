@@ -50,6 +50,17 @@ export class OrderController {
     }
   };
 
+  checkout = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = this.getAuthenticatedUserId(req);
+      const { id } = req.params;
+      const order = await this.orderService.checkout(userId, id, req.body ?? {});
+      res.status(200).json(successResponse(this.toResponse(order), 'Checkout realizado con éxito'));
+    } catch (err) {
+      sendError(res, err);
+    }
+  };
+
   private getAuthenticatedUserId(req: Request): string {
     const userId = req.user?.userId;
     if (!userId) {

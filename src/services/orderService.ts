@@ -1,16 +1,25 @@
 import { AddToCartDto } from '../dtos/addToCartDto';
+import { CheckoutOrderDto } from '../dtos/checkoutOrderDto';
 import { UpdateCartItemDto } from '../dtos/updateCartItemDto';
-import { ResourceNotFoundError, ValidationError } from '../errors/DomainErrors';
+import { NotAllowedError, ResourceNotFoundError, ValidationError } from '../errors/DomainErrors';
 import { IOrderRepository } from '../interfaces/orderRepository';
 import { IProductRepository } from '../interfaces/productRepository';
+import { IProvinceRepository } from '../interfaces/provinceRepository';
+import { Invoice } from '../models/invoice';
 import { Order, OrderStatus } from '../models/order';
 import { OrderErrorMessages } from '../models/error-messages/orderErrorMessages';
+import { Shipping } from '../models/shipping';
 import { isDuplicateKeyError } from '../utils/duplicateKey';
+import { round2 } from '../utils/money';
+
+const IVA_RATE = 0.21;
+const DEFAULT_INVOICE_TYPE = 'Factura B';
 
 export class OrderService {
   constructor(
     private readonly orderRepository: IOrderRepository,
     private readonly productRepository: IProductRepository,
+    private readonly provinceRepository: IProvinceRepository,
   ) {}
 
   public async getCart(userId: string): Promise<Order> {
@@ -100,6 +109,104 @@ export class OrderService {
     await this.orderRepository.save(cart);
 
     return cart;
+  }
+
+  public async checkout(userId: string, orderId: string, dto: CheckoutOrderDto): Promise<Order> {
+    const { provinceId, address } = this.validateCheckoutDto(dto);
+
+    const order = await this.orderRepository.findById(orderId);
+    if (!order) {
+      throw new ResourceNotFoundError('Orden no encontrada');
+    }
+
+    if (order.getUserId() !== userId) {
+      throw new NotAllowedError('No tenés permisos para realizar el checkout de esta orden');
+    }
+
+    if (order.getOrderStatus() !== OrderStatus.CART) {
+      throw new ValidationError([OrderErrorMessages.ORDER_NOT_IN_CART_STATUS()]);
+    }
+
+    const items = order.getItems();
+    if (items.length === 0) {
+      throw new ValidationError([OrderErrorMessages.CART_EMPTY()]);
+    }
+
+    const province = await this.provinceRepository.findById(provinceId);
+    if (!province) {
+      throw new ResourceNotFoundError('Provincia no encontrada');
+    }
+
+    const decrementedItems: { productId: string; quantity: number }[] = [];
+
+    try {
+      for (const item of items) {
+        const updatedProduct = await this.productRepository.decrementStock(item.getProductId(), item.getQuantity());
+
+        if (!updatedProduct) {
+          throw new ValidationError([OrderErrorMessages.INSUFFICIENT_STOCK(item.getProductId())]);
+        }
+
+        decrementedItems.push({ productId: item.getProductId(), quantity: item.getQuantity() });
+        item.setRecordedSalePrice(updatedProduct.getSalePrice());
+      }
+
+      const shippingCost = round2(province.getShippingCost());
+      const shipping = new Shipping({
+        address,
+        provinceId: province.getId(),
+        provinceName: province.getName(),
+        cost: shippingCost,
+      });
+
+      const subtotal = round2(
+        items.reduce((sum, item) => sum + item.getQuantity() * (item.getRecordedSalePrice() ?? 0), 0),
+      );
+      const tax = round2(subtotal * IVA_RATE);
+      const total = round2(subtotal + tax + shippingCost);
+
+      const invoice = new Invoice({
+        invoiceType: DEFAULT_INVOICE_TYPE,
+        subtotal,
+        tax,
+        shippingCost,
+        total,
+        date: new Date(),
+      });
+
+      order.setShipping(shipping);
+      order.setInvoice(invoice);
+      order.changeStatus(OrderStatus.PENDING_DISPATCH);
+
+      await this.orderRepository.save(order);
+      return order;
+    } catch (err) {
+      for (const decremented of decrementedItems) {
+        await this.productRepository.incrementStock(decremented.productId, decremented.quantity);
+      }
+      throw err;
+    }
+  }
+
+  private validateCheckoutDto(dto: CheckoutOrderDto): { provinceId: string; address: string } {
+    const errors = [];
+
+    if (typeof dto.provinceId !== 'string' || dto.provinceId.trim().length === 0) {
+      errors.push(OrderErrorMessages.PROVINCE_REQUIRED());
+    }
+
+    if (typeof dto.address !== 'string' || dto.address.trim().length === 0) {
+      errors.push(OrderErrorMessages.ADDRESS_REQUIRED());
+    }
+
+    if (errors.length > 0) {
+      throw new ValidationError(errors);
+    }
+
+    return {
+      provinceId: (dto.provinceId as string).trim(),
+      address: (dto.address as string).trim(),
+    };
   }
 
   private validateUpdateQuantity(dto: UpdateCartItemDto): number {

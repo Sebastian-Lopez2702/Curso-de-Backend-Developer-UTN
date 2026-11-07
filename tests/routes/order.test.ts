@@ -8,17 +8,19 @@ import {
   clearCategories,
   clearOrders,
   clearProducts,
+  clearProvinces,
   clearUsers,
   connectTestDb,
   disconnectTestDb,
 } from '../helpers/db';
-import { createProduct, createUser, tokenFor } from '../helpers/factories';
+import { createProduct, createProvince, createUser, tokenFor } from '../helpers/factories';
 
 describe('Order - Carrito', () => {
   const clearAll = async () => {
     await clearOrders();
     await clearProducts();
     await clearCategories();
+    await clearProvinces();
     await clearUsers();
   };
 
@@ -439,6 +441,213 @@ describe('Order - Carrito', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.items).toHaveLength(1);
       expect(res.body.data.items[0].productId).toBe(product2.getId());
+    });
+  });
+
+  describe('POST /api/orders/:id/checkout', () => {
+    it('Debería responder 401 si no se envía token', async () => {
+      const res = await request(app).post('/api/orders/FictitiousOrderId/checkout').send({
+        provinceId: 'FictitiousProvinceId',
+        address: 'Calle 123',
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it('Debería responder 403 para usuarios con rol distinto a CLIENT', async () => {
+      const seller = await createSeller();
+      const res = await request(app)
+        .post('/api/orders/FictitiousOrderId/checkout')
+        .set('Authorization', seller.authorization)
+        .send({
+          provinceId: 'FictitiousProvinceId',
+          address: 'Calle 123',
+        });
+      expect(res.status).toBe(403);
+    });
+
+    it('Debería responder 400 si faltan provinceId o address', async () => {
+      const client = await createClient();
+
+      const resMissingProvince = await request(app)
+        .post('/api/orders/FictitiousOrderId/checkout')
+        .set('Authorization', client.authorization)
+        .send({ address: 'Calle 123' });
+      expect(resMissingProvince.status).toBe(400);
+
+      const resMissingAddress = await request(app)
+        .post('/api/orders/FictitiousOrderId/checkout')
+        .set('Authorization', client.authorization)
+        .send({ provinceId: 'FictitiousProvinceId' });
+      expect(resMissingAddress.status).toBe(400);
+    });
+
+    it('Debería responder 404 si la orden no existe', async () => {
+      const client = await createClient();
+      const province = await createProvince('Córdoba', 500);
+
+      const res = await request(app)
+        .post('/api/orders/FictitiousOrderId/checkout')
+        .set('Authorization', client.authorization)
+        .send({ provinceId: province.getId(), address: 'Calle 123' });
+
+      expect(res.status).toBe(404);
+    });
+
+    it('Debería responder 403 si la orden pertenece a otro cliente', async () => {
+      const client1 = await createClient();
+      const client2 = await createClient();
+      const product = await createProduct({ stock: 5 });
+      const province = await createProvince('Córdoba', 500);
+
+      const cartRes = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client1.authorization)
+        .send({ productId: product.getId(), quantity: 1 });
+      const orderId = cartRes.body.data.id;
+
+      const res = await request(app)
+        .post(`/api/orders/${orderId}/checkout`)
+        .set('Authorization', client2.authorization)
+        .send({ provinceId: province.getId(), address: 'Calle 123' });
+
+      expect(res.status).toBe(403);
+    });
+
+    it('Debería responder 404 si la provincia indicada no existe', async () => {
+      const client = await createClient();
+      const product = await createProduct({ stock: 5 });
+
+      const cartRes = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product.getId(), quantity: 1 });
+      const orderId = cartRes.body.data.id;
+
+      const res = await request(app)
+        .post(`/api/orders/${orderId}/checkout`)
+        .set('Authorization', client.authorization)
+        .send({ provinceId: 'FictitiousProvinceId', address: 'Calle 123' });
+
+      expect(res.status).toBe(404);
+    });
+
+    it('Debería responder 400 y realizar rollback del inventario si no hay stock suficiente para uno de los productos', async () => {
+      const client = await createClient();
+      const product1 = await createProduct({ stock: 5, salePrice: 1000 });
+      const product2 = await createProduct({ stock: 1, salePrice: 2000 });
+      const province = await createProvince('Santa Fe', 400);
+
+      const cartRes = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product1.getId(), quantity: 2 });
+      const orderId = cartRes.body.data.id;
+
+      await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product2.getId(), quantity: 3 }); // pide 3 pero hay solo 1
+
+      const res = await request(app)
+        .post(`/api/orders/${orderId}/checkout`)
+        .set('Authorization', client.authorization)
+        .send({ provinceId: province.getId(), address: 'Av. Libertador 100' });
+
+      expect(res.status).toBe(400);
+
+      // Verificamos que el stock del product1 haya sido devuelto intacto (compensación)
+      const freshProd1 = await ProductModel.findById(product1.getId());
+      expect(freshProd1?.stock).toBe(5);
+
+      const freshProd2 = await ProductModel.findById(product2.getId());
+      expect(freshProd2?.stock).toBe(1);
+
+      // La orden sigue en estado CART
+      const freshOrder = await OrderModel.findById(orderId);
+      expect(freshOrder?.orderStatus).toBe(OrderStatus.CART);
+    });
+
+    it('Debería completar el checkout exitosamente con cálculo de IVA y congelamiento de precio', async () => {
+      const client = await createClient();
+      const product1 = await createProduct({ stock: 10, salePrice: 1000 });
+      const product2 = await createProduct({ stock: 5, salePrice: 2500 });
+      const province = await createProvince('Buenos Aires', 600);
+
+      const cartRes = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product1.getId(), quantity: 2 });
+      const orderId = cartRes.body.data.id;
+
+      await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product2.getId(), quantity: 1 });
+
+      // Cambiamos el precio de product1 en el catálogo a 1200 antes de pagar
+      await ProductModel.findByIdAndUpdate(product1.getId(), { salePrice: 1200 });
+
+      const res = await request(app)
+        .post(`/api/orders/${orderId}/checkout`)
+        .set('Authorization', client.authorization)
+        .send({ provinceId: province.getId(), address: 'San Martín 450' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.orderStatus).toBe(OrderStatus.PENDING_DISPATCH);
+
+      // Stock descontado en la DB
+      const freshProd1 = await ProductModel.findById(product1.getId());
+      expect(freshProd1?.stock).toBe(8);
+
+      const freshProd2 = await ProductModel.findById(product2.getId());
+      expect(freshProd2?.stock).toBe(4);
+
+      // Precios sincronizados y congelados
+      const items = res.body.data.items;
+      expect(items[0].recordedSalePrice).toBe(1200);
+      expect(items[1].recordedSalePrice).toBe(2500);
+
+      // Factura (subtotal = 2 * 1200 + 1 * 2500 = 4900)
+      // tax (21%) = 1029
+      // shipping = 600
+      // total = 6529
+      const invoice = res.body.data.invoice;
+      expect(invoice.subtotal).toBe(4900);
+      expect(invoice.tax).toBe(1029);
+      expect(invoice.shippingCost).toBe(600);
+      expect(invoice.total).toBe(6529);
+
+      const shipping = res.body.data.shipping;
+      expect(shipping.cost).toBe(600);
+      expect(shipping.address).toBe('San Martín 450');
+      expect(shipping.provinceName).toBe('Buenos Aires');
+    });
+
+    it('Debería responder 400 si se intenta hacer checkout de una orden que ya fue pagada', async () => {
+      const client = await createClient();
+      const product = await createProduct({ stock: 5, salePrice: 1000 });
+      const province = await createProvince('Mendoza', 500);
+
+      const cartRes = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product.getId(), quantity: 1 });
+      const orderId = cartRes.body.data.id;
+
+      // Primer checkout
+      await request(app)
+        .post(`/api/orders/${orderId}/checkout`)
+        .set('Authorization', client.authorization)
+        .send({ provinceId: province.getId(), address: 'Calle 1' });
+
+      // Segundo intento de checkout
+      const resSecond = await request(app)
+        .post(`/api/orders/${orderId}/checkout`)
+        .set('Authorization', client.authorization)
+        .send({ provinceId: province.getId(), address: 'Calle 1' });
+
+      expect(resSecond.status).toBe(400);
     });
   });
 });
