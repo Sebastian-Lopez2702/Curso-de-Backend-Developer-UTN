@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { JwtPayload } from '../interfaces/auth';
+import { AuthenticationError } from '../errors/DomainErrors';
 import { sendError } from '../middleware/errorHandler';
 import { User } from '../models/user';
 import { UserService } from '../services/userService';
@@ -28,7 +28,7 @@ export class UserController {
 
   me = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { userId } = req.user as JwtPayload;
+      const userId = this.getAuthenticatedUserId(req);
       const user = await this.userService.getProfile(userId);
       res.status(200).json(successResponse(this.toResponse(user)));
     } catch (err) {
@@ -44,6 +44,14 @@ export class UserController {
       sendError(res, err);
     }
   };
+
+  private getAuthenticatedUserId(req: Request): string {
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new AuthenticationError();
+    }
+    return userId;
+  }
 
   private toResponse(user: User) {
     return {
