@@ -198,21 +198,26 @@ describe('ProductRepository', () => {
   });
 
   describe('decrementStock', () => {
-    it('Debería descontar el stock', async () => {
-      const product = await createProduct({ stock: 5 });
-      expect(await repository.decrementStock(product.getId() as string, 2)).toBe(true);
+    it('Debería descontar el stock y retornar la entidad Product actualizada', async () => {
+      const product = await createProduct({ stock: 5, salePrice: 1500 });
+      const updated = await repository.decrementStock(product.getId() as string, 2);
+      expect(updated).toBeInstanceOf(Product);
+      expect(updated?.getStock()).toBe(3);
+      expect(updated?.getSalePrice()).toBe(1500);
       expect((await repository.findById(product.getId() as string))?.getStock()).toBe(3);
     });
 
-    it('Debería devolver false y no tocar el stock si no alcanza', async () => {
+    it('Debería devolver null y no tocar el stock si no alcanza', async () => {
       const product = await createProduct({ stock: 1 });
-      expect(await repository.decrementStock(product.getId() as string, 2)).toBe(false);
+      expect(await repository.decrementStock(product.getId() as string, 2)).toBeNull();
       expect((await repository.findById(product.getId() as string))?.getStock()).toBe(1);
     });
 
     it('Debería permitir llegar exactamente a 0', async () => {
       const product = await createProduct({ stock: 3 });
-      expect(await repository.decrementStock(product.getId() as string, 3)).toBe(true);
+      const updated = await repository.decrementStock(product.getId() as string, 3);
+      expect(updated).not.toBeNull();
+      expect(updated?.getStock()).toBe(0);
       expect((await repository.findById(product.getId() as string))?.getStock()).toBe(0);
     });
 
@@ -220,25 +225,48 @@ describe('ProductRepository', () => {
       const product = await createProduct({ stock: 5 });
       const id = product.getId() as string;
       const results = await Promise.all(Array.from({ length: 10 }, () => repository.decrementStock(id, 1)));
-      expect(results.filter(Boolean)).toHaveLength(5);
+      expect(results.filter((res) => res !== null)).toHaveLength(5);
       expect((await repository.findById(id))?.getStock()).toBe(0);
     });
 
-    it('Debería devolver false con producto inactivo, inexistente o id inválido', async () => {
+    it('Debería devolver null con producto inactivo, inexistente o id inválido', async () => {
       const product = await createProduct({ stock: 5 });
       product.deactivate();
       await repository.save(product);
-      expect(await repository.decrementStock(product.getId() as string, 1)).toBe(false);
-      expect(await repository.decrementStock(new mongoose.Types.ObjectId().toString(), 1)).toBe(false);
-      expect(await repository.decrementStock('xxx', 1)).toBe(false);
+      expect(await repository.decrementStock(product.getId() as string, 1)).toBeNull();
+      expect(await repository.decrementStock(new mongoose.Types.ObjectId().toString(), 1)).toBeNull();
+      expect(await repository.decrementStock('xxx', 1)).toBeNull();
+    });
+
+    it('Debería devolver null con cantidades inválidas', async () => {
+      const product = await createProduct();
+      const id = product.getId() as string;
+      expect(await repository.decrementStock(id, 0)).toBeNull();
+      expect(await repository.decrementStock(id, -1)).toBeNull();
+      expect(await repository.decrementStock(id, 1.5)).toBeNull();
+    });
+  });
+
+  describe('incrementStock', () => {
+    it('Debería incrementar el stock de un producto existente', async () => {
+      const product = await createProduct({ stock: 5 });
+      const result = await repository.incrementStock(product.getId() as string, 3);
+      expect(result).toBe(true);
+      expect((await repository.findById(product.getId() as string))?.getStock()).toBe(8);
     });
 
     it('Debería devolver false con cantidades inválidas', async () => {
-      const product = await createProduct();
+      const product = await createProduct({ stock: 5 });
       const id = product.getId() as string;
-      expect(await repository.decrementStock(id, 0)).toBe(false);
-      expect(await repository.decrementStock(id, -1)).toBe(false);
-      expect(await repository.decrementStock(id, 1.5)).toBe(false);
+      expect(await repository.incrementStock(id, 0)).toBe(false);
+      expect(await repository.incrementStock(id, -2)).toBe(false);
+      expect(await repository.incrementStock(id, 2.5)).toBe(false);
+      expect((await repository.findById(id))?.getStock()).toBe(5);
+    });
+
+    it('Debería devolver false si el producto no existe o el id es inválido', async () => {
+      expect(await repository.incrementStock('invalido', 3)).toBe(false);
+      expect(await repository.incrementStock(new mongoose.Types.ObjectId().toString(), 3)).toBe(false);
     });
   });
 

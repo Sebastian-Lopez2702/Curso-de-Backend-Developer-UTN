@@ -31,6 +31,7 @@ describe('OrderService', () => {
       findPaginated: jest.fn(),
       findBySellerId: jest.fn(),
       decrementStock: jest.fn(),
+      incrementStock: jest.fn(),
       existsByCategoryId: jest.fn(),
     };
 

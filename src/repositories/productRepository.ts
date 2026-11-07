@@ -97,14 +97,24 @@ export class ProductRepository implements IProductRepository {
     return this.toEntities(records);
   }
 
-  public async decrementStock(id: string, quantity: number): Promise<boolean> {
-    if (!isValidObjectId(id) || !Number.isInteger(quantity) || quantity <= 0) return false;
+  public async decrementStock(id: string, quantity: number): Promise<Product | null> {
+    if (!isValidObjectId(id) || !Number.isInteger(quantity) || quantity <= 0) return null;
 
     const onlyIfStockIsEnough = { _id: id, isActive: true, stock: { $gte: quantity } };
     const quantityToSubtract = -quantity;
     const subtractStock = { $inc: { stock: quantityToSubtract } };
 
     const updated = await ProductModel.findOneAndUpdate(onlyIfStockIsEnough, subtractStock, { new: true });
+    if (!updated) return null;
+
+    const products = await this.toEntities([updated]);
+    return products[0];
+  }
+
+  public async incrementStock(id: string, quantity: number): Promise<boolean> {
+    if (!isValidObjectId(id) || !Number.isInteger(quantity) || quantity <= 0) return false;
+
+    const updated = await ProductModel.findByIdAndUpdate(id, { $inc: { stock: quantity } }, { new: true });
     return updated !== null;
   }
 

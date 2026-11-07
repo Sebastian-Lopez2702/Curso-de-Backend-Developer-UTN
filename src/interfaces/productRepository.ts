@@ -18,6 +18,7 @@ export interface IProductRepository {
   findByIdAndSellerId(id: string, sellerId: string): Promise<Product | null>;
   findPaginated(filter: ProductFilter): Promise<PaginatedResult<Product>>;
   findBySellerId(sellerId: string): Promise<Product[]>;
-  decrementStock(id: string, quantity: number): Promise<boolean>;
+  decrementStock(id: string, quantity: number): Promise<Product | null>;
+  incrementStock(id: string, quantity: number): Promise<boolean>;
   existsByCategoryId(categoryId: string): Promise<boolean>;
 }

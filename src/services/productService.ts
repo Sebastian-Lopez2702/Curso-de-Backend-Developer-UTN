@@ -97,7 +97,8 @@ export class ProductService {
     if (!Number.isInteger(quantity) || quantity <= 0) {
       throw new ValidationError([ProductErrorMessages.QUANTITY_INVALID()]);
     }
-    return this.productRepository.decrementStock(id, quantity);
+    const updatedProduct = await this.productRepository.decrementStock(id, quantity);
+    return updatedProduct !== null;
   }
 
   private async saveTranslatingDuplicates(product: Product): Promise<void> {

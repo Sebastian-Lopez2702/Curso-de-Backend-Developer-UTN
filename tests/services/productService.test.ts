@@ -16,6 +16,7 @@ const buildProductRepositoryMock = (): jest.Mocked<IProductRepository> => ({
   findPaginated: jest.fn(),
   findBySellerId: jest.fn(),
   decrementStock: jest.fn(),
+  incrementStock: jest.fn(),
   existsByCategoryId: jest.fn(),
 });
 
@@ -248,7 +249,16 @@ describe('ProductService', () => {
 
   describe('decrementStock', () => {
     it('Debería descontar stock cuando la cantidad es válida', async () => {
-      productRepository.decrementStock.mockResolvedValue(true);
+      const product = new Product({
+        sku: 'SKU-1',
+        name: 'Producto',
+        description: 'Desc',
+        salePrice: 100,
+        stock: 5,
+        categoryId: 'cat-1',
+        sellerId: 'seller-1',
+      });
+      productRepository.decrementStock.mockResolvedValue(product);
 
       const result = await service.decrementStock('product-1', 2);
 
