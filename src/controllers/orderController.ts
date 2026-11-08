@@ -61,6 +61,35 @@ export class OrderController {
     }
   };
 
+  getMyOrders = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = this.getAuthenticatedUserId(req);
+      const orders = await this.orderService.getMyOrders(userId);
+      res.status(200).json(successResponse(orders.map((order) => this.toResponse(order))));
+    } catch (err) {
+      sendError(res, err);
+    }
+  };
+
+  getSellerSales = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const sellerId = this.getAuthenticatedUserId(req);
+      const sales = await this.orderService.getSellerSales(sellerId);
+      res.status(200).json(successResponse(sales));
+    } catch (err) {
+      sendError(res, err);
+    }
+  };
+
+  getAllOrders = async (_req: Request, res: Response): Promise<void> => {
+    try {
+      const orders = await this.orderService.getAllOrders();
+      res.status(200).json(successResponse(orders.map((order) => this.toResponse(order))));
+    } catch (err) {
+      sendError(res, err);
+    }
+  };
+
   private getAuthenticatedUserId(req: Request): string {
     const userId = req.user?.userId;
     if (!userId) {

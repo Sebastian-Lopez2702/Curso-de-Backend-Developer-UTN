@@ -650,4 +650,191 @@ describe('Order - Carrito', () => {
       expect(resSecond.status).toBe(400);
     });
   });
+
+  describe('GET /api/orders/my-orders', () => {
+    it('Debería responder 401 si no se envía token', async () => {
+      const res = await request(app).get('/api/orders/my-orders');
+      expect(res.status).toBe(401);
+    });
+
+    it('Debería responder 403 para usuarios no CLIENT', async () => {
+      const seller = await createSeller();
+      const res = await request(app)
+        .get('/api/orders/my-orders')
+        .set('Authorization', seller.authorization);
+      expect(res.status).toBe(403);
+    });
+
+    it('Debería listar solo órdenes confirmadas del cliente, excluyendo el carrito', async () => {
+      const client = await createClient();
+      const product = await createProduct({ stock: 5, salePrice: 1000 });
+      const province = await createProvince('Buenos Aires', 500);
+
+      // Crear carrito y pagar para tener una orden confirmada
+      const cartRes = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product.getId(), quantity: 1 });
+      const orderId = cartRes.body.data.id;
+
+      await request(app)
+        .post(`/api/orders/${orderId}/checkout`)
+        .set('Authorization', client.authorization)
+        .send({ provinceId: province.getId(), address: 'Av. Corrientes 1234' });
+
+      // Ahora agregar otro producto al nuevo carrito (estado CART)
+      const product2 = await createProduct({ stock: 5 });
+      await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product2.getId(), quantity: 1 });
+
+      const res = await request(app)
+        .get('/api/orders/my-orders')
+        .set('Authorization', client.authorization);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].id).toBe(orderId);
+      expect(res.body.data[0].orderStatus).toBe(OrderStatus.PENDING_DISPATCH);
+    });
+  });
+
+  describe('GET /api/orders/seller-sales', () => {
+    it('Debería responder 401 si no se envía token', async () => {
+      const res = await request(app).get('/api/orders/seller-sales');
+      expect(res.status).toBe(401);
+    });
+
+    it('Debería responder 403 para usuarios no SELLER', async () => {
+      const client = await createClient();
+      const res = await request(app)
+        .get('/api/orders/seller-sales')
+        .set('Authorization', client.authorization);
+      expect(res.status).toBe(403);
+    });
+
+    it('Debería retornar ventas con datos del producto, subtotal neto, sin datos de otros vendedores ni órdenes en CART', async () => {
+      const seller1 = await createSeller();
+      const seller2 = await createSeller();
+      const buyer = await createClient();
+      const province = await createProvince('Santa Fe', 300);
+
+      const prodSeller1 = await createProduct({
+        sellerId: seller1.id,
+        stock: 10,
+        salePrice: 1200,
+        name: 'Libro A',
+        sku: 'SKU-LIB-A',
+      });
+      const prodSeller2 = await createProduct({
+        sellerId: seller2.id,
+        stock: 10,
+        salePrice: 3500,
+        name: 'Libro B',
+        sku: 'SKU-LIB-B',
+      });
+
+      // El comprador agrega ambos y hace checkout
+      await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', buyer.authorization)
+        .send({ productId: prodSeller1.getId(), quantity: 2 });
+      const cartRes = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', buyer.authorization)
+        .send({ productId: prodSeller2.getId(), quantity: 1 });
+      const orderId = cartRes.body.data.id;
+
+      await request(app)
+        .post(`/api/orders/${orderId}/checkout`)
+        .set('Authorization', buyer.authorization)
+        .send({ provinceId: province.getId(), address: 'Urquiza 500' });
+
+      // Otro cliente agrega prodSeller1 al carrito pero NO hace checkout (queda en CART)
+      const buyer2 = await createClient();
+      await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', buyer2.authorization)
+        .send({ productId: prodSeller1.getId(), quantity: 3 });
+
+      // Consultar ventas de seller1
+      const res = await request(app)
+        .get('/api/orders/seller-sales')
+        .set('Authorization', seller1.authorization);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveLength(1);
+
+      const sale = res.body.data[0];
+      expect(sale.orderId).toBe(orderId);
+      expect(sale.orderStatus).toBe(OrderStatus.PENDING_DISPATCH);
+      expect(sale.subtotal).toBe(2400); // 2 * 1200
+      expect(sale.items).toHaveLength(1);
+      expect(sale.items[0]).toMatchObject({
+        productId: prodSeller1.getId(),
+        sku: 'SKU-LIB-A',
+        name: 'Libro A',
+        quantity: 2,
+        recordedSalePrice: 1200,
+      });
+      expect(sale.items[0].category).toHaveProperty('name');
+      // No debe exponer userId ni productos de seller2
+      expect(sale).not.toHaveProperty('userId');
+      expect(sale).not.toHaveProperty('invoice');
+    });
+  });
+
+  describe('GET /api/orders', () => {
+    it('Debería responder 401 sin token', async () => {
+      const res = await request(app).get('/api/orders');
+      expect(res.status).toBe(401);
+    });
+
+    it('Debería responder 403 para usuarios no ADMIN', async () => {
+      const client = await createClient();
+      const res = await request(app)
+        .get('/api/orders')
+        .set('Authorization', client.authorization);
+      expect(res.status).toBe(403);
+    });
+
+    it('Debería devolver todas las órdenes confirmadas del sistema', async () => {
+      const admin = await createAdmin();
+      const client = await createClient();
+      const product = await createProduct({ stock: 10, salePrice: 1000 });
+      const province = await createProvince('Córdoba', 500);
+
+      // Crear orden y pagar
+      const cartRes = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product.getId(), quantity: 1 });
+      const orderId = cartRes.body.data.id;
+
+      await request(app)
+        .post(`/api/orders/${orderId}/checkout`)
+        .set('Authorization', client.authorization)
+        .send({ provinceId: province.getId(), address: 'Calle 1' });
+
+      // Dejar un carrito abierto sin pagar
+      const client2 = await createClient();
+      await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client2.authorization)
+        .send({ productId: product.getId(), quantity: 1 });
+
+      const res = await request(app)
+        .get('/api/orders')
+        .set('Authorization', admin.authorization);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].id).toBe(orderId);
+      expect(res.body.data[0].orderStatus).toBe(OrderStatus.PENDING_DISPATCH);
+    });
+  });
 });

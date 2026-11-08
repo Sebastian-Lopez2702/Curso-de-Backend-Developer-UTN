@@ -19,6 +19,9 @@ router.get('/cart', verifyToken, authorizeRoles(UserRole.CLIENT), orderControlle
 router.post('/cart', verifyToken, authorizeRoles(UserRole.CLIENT), orderController.addToCart);
 router.put('/cart/items/:productId', verifyToken, authorizeRoles(UserRole.CLIENT), orderController.updateCartItem);
 router.delete('/cart/items/:productId', verifyToken, authorizeRoles(UserRole.CLIENT), orderController.removeCartItem);
+router.get('/my-orders', verifyToken, authorizeRoles(UserRole.CLIENT), orderController.getMyOrders);
+router.get('/seller-sales', verifyToken, authorizeRoles(UserRole.SELLER), orderController.getSellerSales);
+router.get('/', verifyToken, authorizeRoles(UserRole.ADMIN), orderController.getAllOrders);
 router.post('/:id/checkout', verifyToken, authorizeRoles(UserRole.CLIENT), orderController.checkout);
 
 export { router as orderRouter };

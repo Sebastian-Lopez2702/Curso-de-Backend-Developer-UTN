@@ -425,4 +425,106 @@ describe('OrderService', () => {
       expect(productRepositoryMock.incrementStock).toHaveBeenCalledWith('prod-1', 2);
     });
   });
+
+  describe('getMyOrders', () => {
+    it('Debería retornar solo órdenes confirmadas del usuario, excluyendo las de estado CART', async () => {
+      const confirmedOrder = new Order({ userId: USER_ID, orderStatus: OrderStatus.PENDING_DISPATCH });
+      const cartOrder = new Order({ userId: USER_ID, orderStatus: OrderStatus.CART });
+
+      orderRepositoryMock.findByUserId.mockResolvedValue([confirmedOrder, cartOrder]);
+
+      const result = await orderService.getMyOrders(USER_ID);
+
+      expect(orderRepositoryMock.findByUserId).toHaveBeenCalledWith(USER_ID);
+      expect(result).toHaveLength(1);
+      expect(result[0].getOrderStatus()).toBe(OrderStatus.PENDING_DISPATCH);
+    });
+  });
+
+  describe('getAllOrders', () => {
+    it('Debería retornar todas las órdenes confirmadas del sistema, excluyendo carritos', async () => {
+      const order1 = new Order({ userId: 'user-1', orderStatus: OrderStatus.PENDING_DISPATCH });
+      const order2 = new Order({ userId: 'user-2', orderStatus: OrderStatus.DELIVERED });
+      const cartOrder = new Order({ userId: 'user-3', orderStatus: OrderStatus.CART });
+
+      orderRepositoryMock.findAll.mockResolvedValue([order1, order2, cartOrder]);
+
+      const result = await orderService.getAllOrders();
+
+      expect(orderRepositoryMock.findAll).toHaveBeenCalled();
+      expect(result).toHaveLength(2);
+      expect(result.map((o) => o.getOrderStatus())).toEqual([
+        OrderStatus.PENDING_DISPATCH,
+        OrderStatus.DELIVERED,
+      ]);
+    });
+  });
+
+  describe('getSellerSales', () => {
+    it('Debería retornar las ventas del vendedor con datos de producto, subtotal neto y sin exponer carritos ni productos de otros vendedores', async () => {
+      const orderConfirmed = new Order({
+        userId: 'buyer-1',
+        orderStatus: OrderStatus.PENDING_DISPATCH,
+        createdAt: new Date('2026-11-01T10:00:00Z'),
+      });
+      orderConfirmed.assignId('order-1');
+      orderConfirmed.addItem({
+        productId: 'prod-1',
+        quantity: 2,
+        recordedSalePrice: 1500,
+        sellerId: SELLER_ID,
+      });
+      orderConfirmed.addItem({
+        productId: 'prod-other',
+        quantity: 1,
+        recordedSalePrice: 3000,
+        sellerId: 'other-seller',
+      });
+
+      const cartOrder = new Order({
+        userId: 'buyer-2',
+        orderStatus: OrderStatus.CART,
+        createdAt: new Date('2026-11-02T10:00:00Z'),
+      });
+      cartOrder.addItem({
+        productId: 'prod-1',
+        quantity: 5,
+        recordedSalePrice: 1500,
+        sellerId: SELLER_ID,
+      });
+
+      orderRepositoryMock.findBySellerId.mockResolvedValue([cartOrder, orderConfirmed]);
+
+      const product = buildActiveProduct({
+        sku: 'SKU-001',
+        name: 'Camiseta',
+        salePrice: 1500,
+      });
+      product.assignId('prod-1');
+      productRepositoryMock.findById.mockResolvedValue(product);
+
+      const sales = await orderService.getSellerSales(SELLER_ID);
+
+      expect(orderRepositoryMock.findBySellerId).toHaveBeenCalledWith(SELLER_ID);
+      // Solo una orden confirmada (excluye CART)
+      expect(sales).toHaveLength(1);
+
+      const sale = sales[0];
+      expect(sale.orderId).toBe('order-1');
+      expect(sale.orderStatus).toBe(OrderStatus.PENDING_DISPATCH);
+      expect(sale.subtotal).toBe(3000); // 2 * 1500
+      expect(sale.items).toHaveLength(1); // Solo el producto de SELLER_ID
+      expect(sale.items[0]).toEqual({
+        productId: 'prod-1',
+        sku: 'SKU-001',
+        name: 'Camiseta',
+        category: {
+          id: undefined,
+          name: '',
+        },
+        quantity: 2,
+        recordedSalePrice: 1500,
+      });
+    });
+  });
 });

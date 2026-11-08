@@ -1,5 +1,6 @@
 import { AddToCartDto } from '../dtos/addToCartDto';
 import { CheckoutOrderDto } from '../dtos/checkoutOrderDto';
+import { SellerSaleDto, SellerSaleItemDto } from '../dtos/sellerSaleDto';
 import { UpdateCartItemDto } from '../dtos/updateCartItemDto';
 import { NotAllowedError, ResourceNotFoundError, ValidationError } from '../errors/DomainErrors';
 import { IOrderRepository } from '../interfaces/orderRepository';
@@ -186,6 +187,70 @@ export class OrderService {
       }
       throw err;
     }
+  }
+
+  public async getMyOrders(userId: string): Promise<Order[]> {
+    const orders = await this.orderRepository.findByUserId(userId);
+    return orders.filter((order) => order.getOrderStatus() !== OrderStatus.CART);
+  }
+
+  public async getAllOrders(): Promise<Order[]> {
+    const orders = await this.orderRepository.findAll();
+    return orders.filter((order) => order.getOrderStatus() !== OrderStatus.CART);
+  }
+
+  public async getSellerSales(sellerId: string): Promise<SellerSaleDto[]> {
+    const orders = await this.orderRepository.findBySellerId(sellerId);
+    const confirmedOrders = orders.filter((order) => order.getOrderStatus() !== OrderStatus.CART);
+
+    const sales: SellerSaleDto[] = [];
+
+    for (const order of confirmedOrders) {
+      const sellerItems = order.getItems().filter((item) => item.getSellerId() === sellerId);
+      if (sellerItems.length === 0) continue;
+
+      const itemsDto: SellerSaleItemDto[] = [];
+      let subtotal = 0;
+
+      for (const item of sellerItems) {
+        const product = await this.productRepository.findById(item.getProductId());
+        const recordedPrice = item.getRecordedSalePrice() ?? 0;
+        const itemSubtotal = round2(item.getQuantity() * recordedPrice);
+        subtotal = round2(subtotal + itemSubtotal);
+
+        itemsDto.push({
+          productId: item.getProductId(),
+          sku: product ? product.getSku() : '',
+          name: product ? product.getName() : '',
+          category: {
+            id: product?.getCategory()?.getId(),
+            name: product?.getCategory()?.getName() ?? '',
+          },
+          quantity: item.getQuantity(),
+          recordedSalePrice: recordedPrice,
+        });
+      }
+
+      const saleDate = order.getInvoice()?.getDate() ?? order.getUpdatedAt() ?? order.getCreatedAt();
+
+      sales.push({
+        orderId: order.getId(),
+        orderStatus: order.getOrderStatus(),
+        saleDate,
+        items: itemsDto,
+        subtotal,
+      });
+    }
+
+    return this.sortBySaleDateDescending(sales);
+  }
+
+  private sortBySaleDateDescending(sales: SellerSaleDto[]): SellerSaleDto[] {
+    return sales.sort((firstSale, secondSale) => {
+      const firstTimestamp = firstSale.saleDate?.getTime() ?? 0;
+      const secondTimestamp = secondSale.saleDate?.getTime() ?? 0;
+      return secondTimestamp - firstTimestamp;
+    });
   }
 
   private validateCheckoutDto(dto: CheckoutOrderDto): { provinceId: string; address: string } {
