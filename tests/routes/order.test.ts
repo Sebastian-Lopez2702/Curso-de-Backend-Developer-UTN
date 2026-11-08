@@ -659,9 +659,7 @@ describe('Order - Carrito', () => {
 
     it('Debería responder 403 para usuarios no CLIENT', async () => {
       const seller = await createSeller();
-      const res = await request(app)
-        .get('/api/orders/my-orders')
-        .set('Authorization', seller.authorization);
+      const res = await request(app).get('/api/orders/my-orders').set('Authorization', seller.authorization);
       expect(res.status).toBe(403);
     });
 
@@ -689,9 +687,7 @@ describe('Order - Carrito', () => {
         .set('Authorization', client.authorization)
         .send({ productId: product2.getId(), quantity: 1 });
 
-      const res = await request(app)
-        .get('/api/orders/my-orders')
-        .set('Authorization', client.authorization);
+      const res = await request(app).get('/api/orders/my-orders').set('Authorization', client.authorization);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -709,9 +705,7 @@ describe('Order - Carrito', () => {
 
     it('Debería responder 403 para usuarios no SELLER', async () => {
       const client = await createClient();
-      const res = await request(app)
-        .get('/api/orders/seller-sales')
-        .set('Authorization', client.authorization);
+      const res = await request(app).get('/api/orders/seller-sales').set('Authorization', client.authorization);
       expect(res.status).toBe(403);
     });
 
@@ -760,9 +754,7 @@ describe('Order - Carrito', () => {
         .send({ productId: prodSeller1.getId(), quantity: 3 });
 
       // Consultar ventas de seller1
-      const res = await request(app)
-        .get('/api/orders/seller-sales')
-        .set('Authorization', seller1.authorization);
+      const res = await request(app).get('/api/orders/seller-sales').set('Authorization', seller1.authorization);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -795,9 +787,7 @@ describe('Order - Carrito', () => {
 
     it('Debería responder 403 para usuarios no ADMIN', async () => {
       const client = await createClient();
-      const res = await request(app)
-        .get('/api/orders')
-        .set('Authorization', client.authorization);
+      const res = await request(app).get('/api/orders').set('Authorization', client.authorization);
       expect(res.status).toBe(403);
     });
 
@@ -826,9 +816,7 @@ describe('Order - Carrito', () => {
         .set('Authorization', client2.authorization)
         .send({ productId: product.getId(), quantity: 1 });
 
-      const res = await request(app)
-        .get('/api/orders')
-        .set('Authorization', admin.authorization);
+      const res = await request(app).get('/api/orders').set('Authorization', admin.authorization);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);

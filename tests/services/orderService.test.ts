@@ -453,10 +453,7 @@ describe('OrderService', () => {
 
       expect(orderRepositoryMock.findAll).toHaveBeenCalled();
       expect(result).toHaveLength(2);
-      expect(result.map((o) => o.getOrderStatus())).toEqual([
-        OrderStatus.PENDING_DISPATCH,
-        OrderStatus.DELIVERED,
-      ]);
+      expect(result.map((o) => o.getOrderStatus())).toEqual([OrderStatus.PENDING_DISPATCH, OrderStatus.DELIVERED]);
     });
   });
 

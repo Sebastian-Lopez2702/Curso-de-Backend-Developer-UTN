@@ -19,4 +19,3 @@ export interface SellerSaleDto {
   items: SellerSaleItemDto[];
   subtotal: number;
 }
-
