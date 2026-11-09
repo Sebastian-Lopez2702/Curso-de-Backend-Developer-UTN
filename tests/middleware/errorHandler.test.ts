@@ -53,7 +53,7 @@ describe('Respuestas de error', () => {
     res = { status: statusMock };
   });
 
-  it('sendError debería responder con el código del error esperado sin registrarlo en el logger', () => {
+  it('sendError debería responder con el código del error esperado sin registrarlo en el logger de error', () => {
     const loggerSpy = jest.spyOn(logger, 'error').mockImplementation();
     sendError(res as Response, new ResourceNotFoundError('No existe'));
 
@@ -63,12 +63,27 @@ describe('Respuestas de error', () => {
     loggerSpy.mockRestore();
   });
 
+  it('sendError debería registrar una advertencia en el logger para errores 400', () => {
+    const warnSpy = jest.spyOn(logger, 'warn').mockImplementation();
+    sendError(res as Response, new ValidationError([{ field: 'name', message: 'requerido' }]));
+
+    expect(statusMock).toHaveBeenCalledWith(400);
+    expect(warnSpy).toHaveBeenCalledWith(
+      'Error en la solicitud del cliente (4xx)',
+      expect.objectContaining({ statusCode: 400 }),
+    );
+    warnSpy.mockRestore();
+  });
+
   it('sendError debería registrar en el logger los errores inesperados y responder 500', () => {
     const loggerSpy = jest.spyOn(logger, 'error').mockImplementation();
     sendError(res as Response, new Error('crash'));
 
     expect(statusMock).toHaveBeenCalledWith(500);
-    expect(loggerSpy).toHaveBeenCalled();
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'Error interno del servidor (500)',
+      expect.objectContaining({ statusCode: 500 }),
+    );
     loggerSpy.mockRestore();
   });
 

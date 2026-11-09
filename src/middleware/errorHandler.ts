@@ -6,8 +6,17 @@ import { toHttpError } from './errorMappers';
 export const sendError = (res: Response, err: unknown): void => {
   const httpError = toHttpError(err);
 
-  if (!httpError.isExpected) {
-    logger.error(err instanceof Error ? err : new Error(String(err)));
+  if (httpError.statusCode >= 500) {
+    logger.error('Error interno del servidor (500)', {
+      statusCode: httpError.statusCode,
+      error: err instanceof Error ? { message: err.message, stack: err.stack } : err,
+    });
+  } else if (httpError.statusCode >= 400 && httpError.statusCode < 500) {
+    logger.warn('Error en la solicitud del cliente (4xx)', {
+      statusCode: httpError.statusCode,
+      message: httpError.message,
+      details: httpError.details,
+    });
   }
 
   res.status(httpError.statusCode).json(errorResponse(httpError.message, httpError.details));
