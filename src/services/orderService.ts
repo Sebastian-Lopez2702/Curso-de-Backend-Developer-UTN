@@ -30,6 +30,20 @@ export class OrderService {
     if (!cart) {
       return new Order({ userId, orderStatus: OrderStatus.CART, items: [] });
     }
+
+    let hasChanges = false;
+    for (const item of cart.getItems()) {
+      const product = await this.productRepository.findById(item.getProductId());
+      if (product && item.getRecordedSalePrice() !== product.getSalePrice()) {
+        item.setRecordedSalePrice(product.getSalePrice());
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      await this.orderRepository.save(cart);
+    }
+
     return cart;
   }
 

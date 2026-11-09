@@ -3,6 +3,7 @@ import { IOrderRepository } from '../../src/interfaces/orderRepository';
 import { IProductRepository } from '../../src/interfaces/productRepository';
 import { IProvinceRepository } from '../../src/interfaces/provinceRepository';
 import { Order, OrderStatus } from '../../src/models/order';
+import { OrderItem } from '../../src/models/orderItems';
 import { Product } from '../../src/models/product';
 import { Province } from '../../src/models/province';
 import { OrderService } from '../../src/services/orderService';
@@ -87,6 +88,37 @@ describe('OrderService', () => {
       expect(result.getOrderStatus()).toBe(OrderStatus.CART);
       expect(result.getItems()).toHaveLength(0);
       expect(result.getId()).toBeUndefined();
+    });
+
+    it('Debería actualizar los precios de los productos en el carrito si cambiaron respecto al precio grabado', async () => {
+      const item = new OrderItem({ productId: PRODUCT_ID, quantity: 2, recordedSalePrice: 1000 });
+      const existingCart = new Order({ userId: USER_ID, orderStatus: OrderStatus.CART, items: [item] });
+      existingCart.assignId('order-1');
+      orderRepositoryMock.findCartByUserId.mockResolvedValue(existingCart);
+
+      const updatedProduct = buildActiveProduct({ salePrice: 2500 });
+      productRepositoryMock.findById.mockResolvedValue(updatedProduct);
+
+      const result = await orderService.getCart(USER_ID);
+
+      expect(productRepositoryMock.findById).toHaveBeenCalledWith(PRODUCT_ID);
+      expect(result.getItems()[0].getRecordedSalePrice()).toBe(2500);
+      expect(orderRepositoryMock.save).toHaveBeenCalledWith(existingCart);
+    });
+
+    it('No debería llamar a save si los precios no cambiaron', async () => {
+      const item = new OrderItem({ productId: PRODUCT_ID, quantity: 2, recordedSalePrice: 1500 });
+      const existingCart = new Order({ userId: USER_ID, orderStatus: OrderStatus.CART, items: [item] });
+      existingCart.assignId('order-1');
+      orderRepositoryMock.findCartByUserId.mockResolvedValue(existingCart);
+
+      const product = buildActiveProduct({ salePrice: 1500 });
+      productRepositoryMock.findById.mockResolvedValue(product);
+
+      const result = await orderService.getCart(USER_ID);
+
+      expect(result.getItems()[0].getRecordedSalePrice()).toBe(1500);
+      expect(orderRepositoryMock.save).not.toHaveBeenCalled();
     });
   });
 

@@ -117,6 +117,26 @@ describe('Order - Carrito', () => {
         sellerId: product.getSellerId(),
       });
     });
+
+    it('Debería actualizar los precios de los productos en el carrito al hacer GET /cart si el vendedor cambió el precio', async () => {
+      const client = await createClient();
+      const product = await createProduct({ salePrice: 1500 });
+
+      await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product.getId(), quantity: 2 });
+
+      await ProductModel.findByIdAndUpdate(product.getId(), { salePrice: 2500 });
+
+      const res = await request(app).get('/api/orders/cart').set('Authorization', client.authorization);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items[0].recordedSalePrice).toBe(2500);
+
+      const storedOrder = await OrderModel.findOne({ userId: client.user.getId(), orderStatus: OrderStatus.CART });
+      expect(storedOrder?.items[0].recordedSalePrice).toBe(2500);
+    });
   });
 
   describe('POST /api/orders/cart', () => {
