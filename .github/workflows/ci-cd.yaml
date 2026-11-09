@@ -49,3 +49,29 @@ jobs:
 
       - name: Ejecutar Linter (ESLint)
         run: yarn lint
+
+  deploy:
+    name: Despliegue en Railway
+    runs-on: ubuntu-latest
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Desplegar a Railway
+        run: |
+          if [ -n "$RAILWAY_DEPLOY_WEBHOOK_URL" ]; then
+            echo "Disparando despliegue mediante Webhook de Railway..."
+            curl -fsSL -X POST "$RAILWAY_DEPLOY_WEBHOOK_URL"
+          elif [ -n "$RAILWAY_TOKEN" ]; then
+            echo "Desplegando mediante Railway CLI..."
+            npm i -g @railway/cli
+            railway up --service Curso-de-Backend-Developer-UTN --detach
+          else
+            echo "::error::No fue posible desplegar el codigo en Railway."
+            exit 1
+          fi
+        env:
+          RAILWAY_DEPLOY_WEBHOOK_URL: ${{ secrets.RAILWAY_DEPLOY_WEBHOOK_URL }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
