@@ -109,50 +109,56 @@ curso_utn_backend/
 La base de datos cuenta con **5 colecciones**, todas configuradas con `{ timestamps: true }` (`createdAt`, `updatedAt`).
 
 ```mermaid
-Diagram
+erDiagram
+    USER ||--o{ PRODUCT : publica
+    USER ||--o{ ORDER : realiza
+    CATEGORY ||--o{ PRODUCT : clasifica
+    PROVINCE ||--o{ ORDER : destino
+    PRODUCT ||--o{ ORDER : incluye
+
     USER {
-        ObjectId _id
+        string _id PK
         string firstName
         string lastName
-        string dni "unique, index"
-        string email "unique, lowercase, index"
-        string phone "optional"
-        string password "bcrypt hash (pre-save)"
-        string role "ADMIN | CLIENT | SELLER"
-        array savedAddresses "street, number, city, provinceId, zipCode"
+        string dni UK "Documento unico"
+        string email UK "Email unico"
+        string phone "Opcional"
+        string password "Hash bcrypt"
+        string role "ADMIN o CLIENT o SELLER"
+        array savedAddresses "Direcciones guardadas"
     }
 
     CATEGORY {
-        ObjectId _id
-        string name "unique, trim"
-        string description "optional, trim"
+        string _id PK
+        string name UK "Nombre unico"
+        string description "Opcional"
     }
 
     PROVINCE {
-        ObjectId _id
-        string name "unique"
-        number shippingCost "min: 0"
+        string _id PK
+        string name UK "Nombre unico"
+        number shippingCost "Costo base de envio"
     }
 
     PRODUCT {
-        ObjectId _id
-        string sku "unique, trim"
-        string name "trim"
-        string description "trim"
-        number salePrice "min: 1"
-        number stock "min: 0"
-        ObjectId categoryId "ref: Category, index"
-        ObjectId sellerId "ref: User, index"
-        boolean isActive "default: true"
+        string _id PK
+        string sku UK "Codigo unico"
+        string name "Nombre del producto"
+        string description "Descripcion"
+        number salePrice "Precio unitario"
+        number stock "Stock disponible"
+        string categoryId FK "Referencia a Category"
+        string sellerId FK "Referencia a User SELLER"
+        boolean isActive "Baja logica"
     }
 
     ORDER {
-        ObjectId _id
-        ObjectId userId "ref: User"
-        string orderStatus "CART | PENDING_DISPATCH | IN_TRANSIT | DELIVERED | CANCELLED"
-        array items "productId, sellerId, quantity, recordedSalePrice"
-        object invoice "invoiceType, subtotal, tax, shippingCost, total, date"
-        object shipping "address, provinceId, provinceName, cost, trackingCode"
+        string _id PK
+        string userId FK "Referencia a User CLIENT"
+        string orderStatus "Estado de la orden"
+        array items "Productos y cantidades"
+        object invoice "Factura B emitida"
+        object shipping "Datos y seguimiento de envio"
     }
 ```
 
