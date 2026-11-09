@@ -1,6 +1,6 @@
 {
-  "name": "utn-ecommerce-api",
-  "version": "0.0.0",
+  "name": "MercadoNexus API",
+  "version": "1.0.0",
   "description": "RESTful API E-Commerce con Arquitectura Limpia, Node.js, Express, TypeScript y MongoDB",
   "main": "dist/server.js",
   "private": true,

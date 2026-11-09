@@ -13,4 +13,10 @@ describe('GET / - Estado de la API', () => {
     expect(res.status).toBe(404);
     expect(res.body.success).toBe(false);
   });
+
+  it('Debería responder 200 en la ruta de documentación /api/docs/', async () => {
+    const res = await request(app).get('/api/docs/');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('Swagger UI');
+  });
 });
