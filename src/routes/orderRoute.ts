@@ -22,6 +22,7 @@ router.delete('/cart/items/:productId', verifyToken, authorizeRoles(UserRole.CLI
 router.get('/my-orders', verifyToken, authorizeRoles(UserRole.CLIENT), orderController.getMyOrders);
 router.get('/seller-sales', verifyToken, authorizeRoles(UserRole.SELLER), orderController.getSellerSales);
 router.get('/', verifyToken, authorizeRoles(UserRole.ADMIN), orderController.getAllOrders);
+router.patch('/:id/shipping', verifyToken, authorizeRoles(UserRole.ADMIN), orderController.updateShipping);
 router.post('/:id/checkout', verifyToken, authorizeRoles(UserRole.CLIENT), orderController.checkout);
 
 export { router as orderRouter };

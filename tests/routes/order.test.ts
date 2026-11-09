@@ -825,4 +825,211 @@ describe('Order - Carrito', () => {
       expect(res.body.data[0].orderStatus).toBe(OrderStatus.PENDING_DISPATCH);
     });
   });
+
+  describe('PATCH /api/orders/:id/shipping', () => {
+    it('Debería responder 401 si no se envía token', async () => {
+      const res = await request(app).patch('/api/orders/507f1f77bcf86cd799439011/shipping').send({
+        orderStatus: OrderStatus.IN_TRANSIT,
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it('Debería responder 403 para usuarios no ADMIN', async () => {
+      const client = await createClient();
+      const res = await request(app)
+        .patch('/api/orders/507f1f77bcf86cd799439011/shipping')
+        .set('Authorization', client.authorization)
+        .send({ orderStatus: OrderStatus.IN_TRANSIT });
+      expect(res.status).toBe(403);
+    });
+
+    it('Debería responder 404 si la orden no existe', async () => {
+      const admin = await createAdmin();
+      const res = await request(app)
+        .patch('/api/orders/507f1f77bcf86cd799439011/shipping')
+        .set('Authorization', admin.authorization)
+        .send({ orderStatus: OrderStatus.IN_TRANSIT });
+      expect(res.status).toBe(404);
+    });
+
+    it('Debería responder 400 si la orden está en estado CART', async () => {
+      const admin = await createAdmin();
+      const client = await createClient();
+      const product = await createProduct({ stock: 5 });
+
+      const cartRes = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product.getId(), quantity: 1 });
+      const orderId = cartRes.body.data.id;
+
+      const res = await request(app)
+        .patch(`/api/orders/${orderId}/shipping`)
+        .set('Authorization', admin.authorization)
+        .send({ orderStatus: OrderStatus.IN_TRANSIT });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('Debería responder 400 si no se envía orderStatus en el body', async () => {
+      const admin = await createAdmin();
+      const client = await createClient();
+      const product = await createProduct({ stock: 5 });
+      const province = await createProvince('Córdoba', 500);
+
+      const cartRes = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product.getId(), quantity: 1 });
+      const orderId = cartRes.body.data.id;
+
+      await request(app)
+        .post(`/api/orders/${orderId}/checkout`)
+        .set('Authorization', client.authorization)
+        .send({ provinceId: province.getId(), address: 'Calle 1' });
+
+      const res = await request(app)
+        .patch(`/api/orders/${orderId}/shipping`)
+        .set('Authorization', admin.authorization)
+        .send({});
+
+      expect(res.status).toBe(400);
+    });
+
+    it('Debería actualizar a IN_TRANSIT asignando el trackingCode generado por el backend exitosamente', async () => {
+      const admin = await createAdmin();
+      const client = await createClient();
+      const product = await createProduct({ stock: 5 });
+      const province = await createProvince('Córdoba', 500);
+
+      const cartRes = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product.getId(), quantity: 1 });
+      const orderId = cartRes.body.data.id;
+
+      await request(app)
+        .post(`/api/orders/${orderId}/checkout`)
+        .set('Authorization', client.authorization)
+        .send({ provinceId: province.getId(), address: 'Calle 1' });
+
+      const res = await request(app)
+        .patch(`/api/orders/${orderId}/shipping`)
+        .set('Authorization', admin.authorization)
+        .send({ orderStatus: OrderStatus.IN_TRANSIT });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.orderStatus).toBe(OrderStatus.IN_TRANSIT);
+    });
+
+    it('Debería permitir avanzar de IN_TRANSIT a DELIVERED', async () => {
+      const admin = await createAdmin();
+      const client = await createClient();
+      const product = await createProduct({ stock: 5 });
+      const province = await createProvince('Córdoba', 500);
+
+      const cartRes = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product.getId(), quantity: 1 });
+      const orderId = cartRes.body.data.id;
+
+      await request(app)
+        .post(`/api/orders/${orderId}/checkout`)
+        .set('Authorization', client.authorization)
+        .send({ provinceId: province.getId(), address: 'Calle 1' });
+
+      await request(app)
+        .patch(`/api/orders/${orderId}/shipping`)
+        .set('Authorization', admin.authorization)
+        .send({ orderStatus: OrderStatus.IN_TRANSIT });
+
+      const res = await request(app)
+        .patch(`/api/orders/${orderId}/shipping`)
+        .set('Authorization', admin.authorization)
+        .send({ orderStatus: OrderStatus.DELIVERED });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.orderStatus).toBe(OrderStatus.DELIVERED);
+    });
+
+    it('Debería cancelar la orden y restaurar el stock en base de datos', async () => {
+      const admin = await createAdmin();
+      const client = await createClient();
+      const product = await createProduct({ stock: 5 });
+      const province = await createProvince('Córdoba', 500);
+
+      const cartRes = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client.authorization)
+        .send({ productId: product.getId(), quantity: 2 });
+      const orderId = cartRes.body.data.id;
+
+      await request(app)
+        .post(`/api/orders/${orderId}/checkout`)
+        .set('Authorization', client.authorization)
+        .send({ provinceId: province.getId(), address: 'Calle 1' });
+
+      // Verificamos que el stock bajó a 3 tras checkout
+      let freshProd = await ProductModel.findById(product.getId());
+      expect(freshProd?.stock).toBe(3);
+
+      // Admin cancela la orden
+      const res = await request(app)
+        .patch(`/api/orders/${orderId}/shipping`)
+        .set('Authorization', admin.authorization)
+        .send({ orderStatus: OrderStatus.CANCELLED });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.orderStatus).toBe(OrderStatus.CANCELLED);
+
+      // Verificamos que el stock fue devuelto a 5
+      freshProd = await ProductModel.findById(product.getId());
+      expect(freshProd?.stock).toBe(5);
+    });
+  });
+
+  describe('Concurrencia en Checkout', () => {
+    it('No debería sobrevender stock cuando dos clientes compiten por la última unidad simultáneamente', async () => {
+      const client1 = await createClient();
+      const client2 = await createClient();
+      const product = await createProduct({ stock: 1, salePrice: 1000 });
+      const province = await createProvince('Buenos Aires', 500);
+
+      // Ambos agregan la única unidad a su carrito
+      const cartRes1 = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client1.authorization)
+        .send({ productId: product.getId(), quantity: 1 });
+      const orderId1 = cartRes1.body.data.id;
+
+      const cartRes2 = await request(app)
+        .post('/api/orders/cart')
+        .set('Authorization', client2.authorization)
+        .send({ productId: product.getId(), quantity: 1 });
+      const orderId2 = cartRes2.body.data.id;
+
+      // Ambos intentan hacer checkout concurrentemente
+      const [res1, res2] = await Promise.all([
+        request(app)
+          .post(`/api/orders/${orderId1}/checkout`)
+          .set('Authorization', client1.authorization)
+          .send({ provinceId: province.getId(), address: 'Calle 1' }),
+        request(app)
+          .post(`/api/orders/${orderId2}/checkout`)
+          .set('Authorization', client2.authorization)
+          .send({ provinceId: province.getId(), address: 'Calle 2' }),
+      ]);
+
+      const statuses = [res1.status, res2.status];
+      // Exactamente uno debe tener éxito (200) y el otro fallar por falta de stock (400)
+      expect(statuses).toContain(200);
+      expect(statuses).toContain(400);
+
+      // El stock final debe ser exactamente 0 (sin sobreventa)
+      const freshProduct = await ProductModel.findById(product.getId());
+      expect(freshProduct?.stock).toBe(0);
+    });
+  });
 });

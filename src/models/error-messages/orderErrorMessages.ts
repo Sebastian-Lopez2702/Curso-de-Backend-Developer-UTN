@@ -45,6 +45,14 @@ export const OrderErrorMessages = {
     field: 'stock',
     message: `Stock insuficiente o producto no disponible para ${productNameOrId}`,
   }),
+  STATUS_REQUIRED: (): ErrorDetail => ({
+    field: 'orderStatus',
+    message: 'El nuevo estado de la orden es obligatorio',
+  }),
+  CANNOT_UPDATE_CART_SHIPPING: (): ErrorDetail => ({
+    field: 'orderStatus',
+    message: 'No se puede modificar el envío de una orden en estado CART',
+  }),
   INVALID_STATUS_TRANSITION: (current: string, next: string): ErrorDetail => ({
     field: 'orderStatus',
     message: `No se puede cambiar el estado de ${current} a ${next}`,

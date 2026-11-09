@@ -2,6 +2,7 @@ import { AddToCartDto } from '../dtos/addToCartDto';
 import { CheckoutOrderDto } from '../dtos/checkoutOrderDto';
 import { SellerSaleDto, SellerSaleItemDto } from '../dtos/sellerSaleDto';
 import { UpdateCartItemDto } from '../dtos/updateCartItemDto';
+import { UpdateShippingDto } from '../dtos/updateShippingDto';
 import { NotAllowedError, ResourceNotFoundError, ValidationError } from '../errors/DomainErrors';
 import { IOrderRepository } from '../interfaces/orderRepository';
 import { IProductRepository } from '../interfaces/productRepository';
@@ -12,6 +13,7 @@ import { OrderErrorMessages } from '../models/error-messages/orderErrorMessages'
 import { Shipping } from '../models/shipping';
 import { isDuplicateKeyError } from '../utils/duplicateKey';
 import { round2 } from '../utils/money';
+import { v7 as uuidv7 } from 'uuid';
 
 const IVA_RATE = 0.21;
 const DEFAULT_INVOICE_TYPE = 'Factura B';
@@ -243,6 +245,55 @@ export class OrderService {
     }
 
     return this.sortBySaleDateDescending(sales);
+  }
+
+  public async updateShippingStatus(orderId: string, dto: UpdateShippingDto): Promise<Order> {
+    const { orderStatus } = this.validateUpdateShippingDto(dto);
+
+    const order = await this.orderRepository.findById(orderId);
+    if (!order) {
+      throw new ResourceNotFoundError('Orden no encontrada');
+    }
+
+    if (order.getOrderStatus() === OrderStatus.CART) {
+      throw new ValidationError([OrderErrorMessages.CANNOT_UPDATE_CART_SHIPPING()]);
+    }
+
+    order.changeStatus(orderStatus);
+
+    if (orderStatus === OrderStatus.IN_TRANSIT) {
+      const trackingCode = this.generateTrackingCode();
+      order.getShipping()?.setTrackingCode(trackingCode);
+    }
+
+    if (orderStatus === OrderStatus.CANCELLED) {
+      for (const item of order.getItems()) {
+        await this.productRepository.incrementStock(item.getProductId(), item.getQuantity());
+      }
+    }
+
+    await this.orderRepository.save(order);
+    return order;
+  }
+
+  private generateTrackingCode(): string {
+    return uuidv7();
+  }
+
+  private validateUpdateShippingDto(dto: UpdateShippingDto): { orderStatus: OrderStatus } {
+    const errors = [];
+
+    if (!dto.orderStatus) {
+      errors.push(OrderErrorMessages.STATUS_REQUIRED());
+    }
+
+    if (errors.length > 0) {
+      throw new ValidationError(errors);
+    }
+
+    return {
+      orderStatus: dto.orderStatus as OrderStatus,
+    };
   }
 
   private sortBySaleDateDescending(sales: SellerSaleDto[]): SellerSaleDto[] {

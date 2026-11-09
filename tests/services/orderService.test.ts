@@ -524,4 +524,84 @@ describe('OrderService', () => {
       });
     });
   });
+
+  describe('updateShippingStatus', () => {
+    it('Debería rechazar si falta orderStatus en el DTO', async () => {
+      await expect(orderService.updateShippingStatus('order-1', {})).rejects.toThrow(ValidationError);
+    });
+
+    it('Debería lanzar ResourceNotFoundError si la orden no existe', async () => {
+      orderRepositoryMock.findById.mockResolvedValue(null);
+
+      await expect(
+        orderService.updateShippingStatus('inexistente', { orderStatus: OrderStatus.IN_TRANSIT }),
+      ).rejects.toThrow(ResourceNotFoundError);
+    });
+
+    it('Debería lanzar ValidationError si la orden está en estado CART', async () => {
+      const cartOrder = new Order({ userId: USER_ID, orderStatus: OrderStatus.CART });
+      orderRepositoryMock.findById.mockResolvedValue(cartOrder);
+
+      await expect(
+        orderService.updateShippingStatus('order-1', { orderStatus: OrderStatus.IN_TRANSIT }),
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('Debería cambiar estado a IN_TRANSIT y generar el trackingCode con UUIDv7', async () => {
+      const order = new Order({
+        userId: USER_ID,
+        orderStatus: OrderStatus.PENDING_DISPATCH,
+        shipping: { cost: 500 },
+      });
+      orderRepositoryMock.findById.mockResolvedValue(order);
+
+      const updated = await orderService.updateShippingStatus('order-1', {
+        orderStatus: OrderStatus.IN_TRANSIT,
+      });
+
+      expect(updated.getOrderStatus()).toBe(OrderStatus.IN_TRANSIT);
+      const trackingCode = updated.getShipping()?.getTrackingCode();
+      expect(trackingCode).toBeDefined();
+      // Formato UUIDv7: 8-4-4-4-12 hex chars con versión 7
+      expect(trackingCode).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+      expect(orderRepositoryMock.save).toHaveBeenCalledWith(updated);
+    });
+
+    it('Debería cambiar estado a DELIVERED exitosamente', async () => {
+      const order = new Order({ userId: USER_ID, orderStatus: OrderStatus.IN_TRANSIT });
+      orderRepositoryMock.findById.mockResolvedValue(order);
+
+      const updated = await orderService.updateShippingStatus('order-1', {
+        orderStatus: OrderStatus.DELIVERED,
+      });
+
+      expect(updated.getOrderStatus()).toBe(OrderStatus.DELIVERED);
+      expect(orderRepositoryMock.save).toHaveBeenCalledWith(updated);
+    });
+
+    it('Debería restaurar el stock de los productos cuando pasa a CANCELLED', async () => {
+      const order = new Order({ userId: USER_ID, orderStatus: OrderStatus.PENDING_DISPATCH });
+      order.addItem({ productId: 'prod-1', quantity: 2 });
+      order.addItem({ productId: 'prod-2', quantity: 5 });
+      orderRepositoryMock.findById.mockResolvedValue(order);
+
+      const updated = await orderService.updateShippingStatus('order-1', {
+        orderStatus: OrderStatus.CANCELLED,
+      });
+
+      expect(updated.getOrderStatus()).toBe(OrderStatus.CANCELLED);
+      expect(productRepositoryMock.incrementStock).toHaveBeenCalledWith('prod-1', 2);
+      expect(productRepositoryMock.incrementStock).toHaveBeenCalledWith('prod-2', 5);
+      expect(orderRepositoryMock.save).toHaveBeenCalledWith(updated);
+    });
+
+    it('Debería rechazar transiciones de estado inválidas (ej. de DELIVERED a CANCELLED)', async () => {
+      const order = new Order({ userId: USER_ID, orderStatus: OrderStatus.DELIVERED });
+      orderRepositoryMock.findById.mockResolvedValue(order);
+
+      await expect(
+        orderService.updateShippingStatus('order-1', { orderStatus: OrderStatus.CANCELLED }),
+      ).rejects.toThrow(ValidationError);
+    });
+  });
 });
