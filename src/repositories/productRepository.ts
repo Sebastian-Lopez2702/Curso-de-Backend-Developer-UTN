@@ -69,10 +69,13 @@ export class ProductRepository implements IProductRepository {
     const query: Record<string, unknown> = { isActive: true };
 
     if (filter.categoryId !== undefined) {
-      if (!isValidObjectId(filter.categoryId)) {
-        return { items: [], total: 0 };
+      const categoryId = filter.categoryId.trim();
+      if (categoryId.length > 0) {
+        if (!isValidObjectId(categoryId)) {
+          return { items: [], total: 0 };
+        }
+        query.categoryId = categoryId;
       }
-      query.categoryId = filter.categoryId;
     }
 
     if (filter.searchText !== undefined) {

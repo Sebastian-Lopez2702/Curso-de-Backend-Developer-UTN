@@ -88,7 +88,8 @@ export class ProductController {
 
   private parseText(value: unknown): string | undefined {
     if (typeof value !== 'string') return undefined;
-    return value;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
   }
 
   private toResponse(product: Product) {

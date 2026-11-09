@@ -101,6 +101,19 @@ describe('Producto', () => {
       expect(res.body.data[0].categoryId).toBe(category.getId());
     });
 
+    it('Debería ignorar el filtro si category viene vacío o con espacios', async () => {
+      await createProduct();
+      await createProduct();
+
+      const resEmpty = await request(app).get('/api/products?category=');
+      expect(resEmpty.status).toBe(200);
+      expect(resEmpty.body.data).toHaveLength(2);
+
+      const resWhitespace = await request(app).get('/api/products?category=%20%20');
+      expect(resWhitespace.status).toBe(200);
+      expect(resWhitespace.body.data).toHaveLength(2);
+    });
+
     it('Debería buscar por texto con q', async () => {
       await createProduct({ name: 'Lapicera azul', sku: 'LAP-1' });
       await createProduct({ name: 'Cuaderno', sku: 'CUA-1' });
