@@ -7,7 +7,7 @@ import { app } from './app';
 const start = async (): Promise<void> => {
   await connectDB();
   await runSeeder();
-  app.listen(env.port, () => {
+  app.listen(env.port, '0.0.0.0', () => {
     logger.info(`Servidor escuchando en el puerto ${env.port}`);
   });
 };
