@@ -24,7 +24,12 @@ const redactSensitiveData = winston.format((info) => {
     return cleaned;
   };
 
-  return sanitize(info);
+  const symbols = Object.getOwnPropertySymbols(info);
+  const result = sanitize(info);
+  for (const sym of symbols) {
+    result[sym] = (info as any)[sym];
+  }
+  return result;
 });
 
 const transports: winston.transport[] = [
