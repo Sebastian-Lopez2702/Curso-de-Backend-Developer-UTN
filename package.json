@@ -1,6 +1,6 @@
 {
   "name": "MercadoNexus API",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "RESTful API E-Commerce con Arquitectura Limpia, Node.js, Express, TypeScript y MongoDB",
   "main": "dist/server.js",
   "private": true,
