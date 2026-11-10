@@ -5,6 +5,13 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-4.21-000000?logo=express&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-7.0-47A248?logo=mongodb&logoColor=white)
+![Railway](https://img.shields.io/badge/Deployed_on-Railway-0B0D0E?logo=railway&logoColor=white)
+![Live API](https://img.shields.io/badge/Live_API-mercadonexus.online-success)
+
+> 🌐 **API en Producción (Desplegada en Railway):**  
+> La API se encuentra desplegada en la nube y disponible públicamente en **Railway**. Se pueden realizar consultas directamente apuntando a:  
+> - **Base URL:** [https://mercadonexus.online](https://mercadonexus.online)  
+> - **Documentación Interactiva (Swagger UI):** [https://mercadonexus.online/api/docs](https://mercadonexus.online/api/docs)
 
 API RESTful para una plataforma de **E-Commerce de alcance nacional (Marketplace)**, desarrollada como **Trabajo Práctico Final** para el curso de **Backend Developer en UTN.BA** (*"Desarrollo de API RESTful con CRUD y Capa de Servicios"*).
 
@@ -265,8 +272,12 @@ erDiagram
      ```
 
 6. **Verificar que el servidor está activo:**
-   - Endpoint de salud: `GET http://localhost:3000/`
-   - Documentación interactiva Swagger UI: `http://localhost:3000/api/docs`
+   - **En Producción (Railway):**
+     - Endpoint de salud: `GET https://mercadonexus.online/`
+     - Documentación interactiva Swagger UI: `https://mercadonexus.online/api/docs`
+   - **En Local:**
+     - Endpoint de salud: `GET http://localhost:3000/`
+     - Documentación interactiva Swagger UI: `http://localhost:3000/api/docs`
 
 ### Datos Iniciales Automáticos (Seeder)
 Al iniciar el servidor (`src/server.ts`), antes de aceptar peticiones HTTP, se ejecuta automáticamente un **Seeder idempotente** (`src/config/seeder.ts`) que inicializa:
@@ -338,6 +349,12 @@ INITIAL_ADMIN_DNI=12345678
 ---
 
 ## 6. Listado Completo de Endpoints
+
+Para realizar consultas al entorno de producción desplegado en Railway, la URL base es:
+```text
+https://mercadonexus.online
+```
+*(O `http://localhost:3000` si se ejecuta de forma local).*
 
 Todas las respuestas de la API siguen una estructura JSON uniforme:
 ```json

@@ -32,6 +32,11 @@ lerna-debug.log*
 /result
 /.nyc_output
 
+# Postman workspace exports
+.postman/
+postman/
+MercadoNexus API - E-Commerce UTN/
+
 # IDEs and editors
 /.idea
 .project
